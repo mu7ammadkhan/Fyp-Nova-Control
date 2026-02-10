@@ -1,0 +1,638 @@
+/* =========================
+   THEME TOKENS
+   ========================= */
+:root{
+  --bg:#f5f7fb;
+  --text:#151922;
+  --muted:#6b7280;
+  --surface:#ffffff;
+  --nav-bg:#ffffff;
+  --border:rgba(0,0,0,.08);
+  --input-border:rgba(0,0,0,.22);
+  --primary:#5d76ff;
+  --shadow-neo:0 28px 50px rgba(0,0,0,.18), 0 10px 20px rgba(0,0,0,.08);
+  --nav-h:64px;
+  color-scheme: light;
+}
+:root[data-theme="dark"]{
+  --bg:#0f131a;
+  --text:#e9eef8;
+  --muted:#9aa6bd;
+  --surface:#131a24;
+  --nav-bg:#0f1624;
+  --border:rgba(255,255,255,.10);
+  --input-border:rgba(255,255,255,.28);
+  --primary:#8fb1ff;
+  --shadow-neo:0 28px 50px rgba(255,255,255,.12), 0 10px 20px rgba(255,255,255,.08);
+  color-scheme: dark;
+}
+
+/* =========================
+   BASE
+   ========================= */
+html, body, #root{ height:100%; }
+html{ background:var(--bg); }
+body{ background:var(--bg); color:var(--text); }
+.text-muted{ color:var(--muted) !important; }
+
+.page-center{
+  min-height: calc(100dvh - var(--nav-h));
+  display:grid;
+  place-items:center;
+  padding-block: clamp(8px, 2vh, 20px);
+}
+
+/* =========================
+   NAVBAR
+   ========================= */
+.nav-3d{
+  background:var(--nav-bg);
+  border-bottom:1px solid var(--border);
+  box-shadow:0 10px 20px rgba(0,0,0,.06), 0 2px 6px rgba(0,0,0,.04);
+}
+.navbar .nav-link{
+  color:var(--text);
+  opacity:.85;
+  text-decoration:none;
+}
+.navbar .nav-link:hover,
+.navbar .nav-link.active{
+  opacity:1;
+  font-weight:600;
+}
+
+.brand-icon{
+  width:32px; height:32px;
+  border-radius:999px;
+  background:var(--surface);
+  border:1px solid var(--border);
+  color:var(--primary);
+  display:inline-grid;
+  place-items:center;
+}
+
+/* =========================
+   AUTH / CARDS
+   ========================= */
+.auth-card{ max-width:420px; width:min(88vw, 420px); margin:0 auto; }
+
+.card-brand-chip{
+  width:56px; height:56px;
+  border-radius:14px;
+  background:var(--surface);
+  color:var(--primary);
+  border:1px solid var(--border);
+  box-shadow:0 12px 26px rgba(0,0,0,.08);
+  display:grid;
+  place-items:center;
+  font-size:22px;
+}
+.brand-title{ color:var(--text); font-weight:800; letter-spacing:.3px; }
+
+.card-neo{
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:16px;
+  box-shadow:var(--shadow-neo);
+  backdrop-filter:saturate(120%) blur(.4px);
+  color:var(--text);
+}
+
+/* =========================
+   FORM ELEMENTS
+   ========================= */
+.input-underline{
+  color:var(--text) !important;
+  caret-color:var(--text);
+  background:transparent !important;
+  border:none !important;
+  border-bottom:1.6px solid var(--input-border) !important;
+  border-radius:0 !important;
+  padding-left:.2rem !important;
+}
+.input-underline::placeholder{ color:var(--muted); }
+.input-underline:focus{
+  box-shadow:none !important;
+  border-bottom-color:var(--primary) !important;
+}
+
+.input-with-toggle{ position:relative; }
+.input-underline.with-toggle{ padding-right:2rem !important; }
+.eye-toggle{
+  position:absolute;
+  right:0; top:50%;
+  transform:translateY(-50%);
+  background:transparent;
+  border:0;
+  color:var(--muted);
+  padding:0 .25rem;
+}
+.eye-toggle:hover{ color:var(--text); }
+
+input:-webkit-autofill,
+input:-webkit-autofill:focus{
+  -webkit-text-fill-color:var(--text) !important;
+  transition: background-color 9999s ease-in-out 0s;
+}
+
+/* =========================
+   BUTTONS / LINKS
+   ========================= */
+.btn, .btn-lg{ border-radius:999px; }
+.btn-primary{ background:var(--primary); border-color:var(--primary); }
+.btn-primary:hover{ filter:brightness(.96); }
+
+.icon-btn, .btn.icon-btn{
+  width:40px; height:40px;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  border-radius:10px;
+  padding:0;
+}
+
+/* make .btn-link + nav-link theme aware */
+.btn-link, .nav-link{ color:var(--primary) !important; }
+.btn-link:hover, .nav-link:hover{ opacity:.9; }
+
+/* =========================
+   MODALS / OFFCANVAS
+   ========================= */
+.modal-content.card-neo{ background:var(--surface); color:var(--text); }
+.modal{ z-index:2000 !important; }
+.modal-backdrop{ z-index:1990 !important; }
+.offcanvas{ z-index:1200; }
+:root[data-theme="dark"] .btn-close{ filter: invert(1); }
+
+/* =========================
+   RESPONSIVE
+   ========================= */
+@media (max-width:480px){
+  .auth-card{ max-width:92vw; }
+}
+
+/* =================================================
+   SIDEBAR (HAMBURGER / OFFCANVAS) – LINK OVERRIDES
+   ================================================= */
+
+/* base reset for sidebar links */
+.nc-offcanvas .nc-link{
+  background: none !important;
+  position: relative;
+  text-decoration: none;
+  margin-top: 7%;
+}
+
+/* remove old hover / active backgrounds */
+.nc-offcanvas .nc-link:hover,
+.nc-offcanvas .nc-link.active{
+  background: none !important;
+}
+
+/* underline base */
+.nc-offcanvas .nc-link::after{
+  content: "";
+  position: absolute;
+  left: 12%;
+  bottom: 4px;
+  width: 0;
+  height: 2px;
+  transition: width .25s ease;
+}
+
+/* hover underline */
+.nc-offcanvas .nc-link:hover::after,
+.nc-offcanvas .nc-link.active::after{
+  width: 76%;
+}
+
+/* =====================
+   LIGHT THEME (default)
+   ===================== */
+.nc-offcanvas .nc-link{
+  color: #000 !important;
+}
+
+.nc-offcanvas .nc-link::after{
+  background-color: #000 !important;
+}
+
+.nc-offcanvas svg,
+.nc-offcanvas i{
+  color: #000 !important;
+  fill: #000 !important;
+  stroke: #000 !important;
+}
+
+/* =====================
+   DARK THEME
+   ===================== */
+:root[data-theme="dark"] .nc-offcanvas .nc-link{
+  color: #fff !important;
+}
+
+:root[data-theme="dark"] .nc-offcanvas .nc-link::after{
+  background-color: #fff !important;
+}
+
+:root[data-theme="dark"] .nc-offcanvas svg,
+:root[data-theme="dark"] .nc-offcanvas i{
+  color: #fff !important;
+  fill: #fff !important;
+  stroke: #fff !important;
+}
+
+/* =========================
+   Other CSS remains unchanged
+   ... (all your remaining blocks like .nc-profile, .device-glass, .room-tile, etc.)
+*/
+
+.nc-profile{
+  border:1px solid var(--border);
+  border-radius:14px;
+  background:var(--surface);
+}
+.nc-profile:hover{ box-shadow:0 10px 22px rgba(0,0,0,.06); }
+
+.nc-avatar{
+  width:56px; height:56px;
+  border-radius:50%;
+  background: color-mix(in srgb, var(--primary) 18%, var(--surface));
+  display:grid;
+  place-items:center;
+  color:var(--text);
+  overflow:hidden;
+  border:1px solid var(--border);
+}
+.nc-avatar img{ width:100%; height:100%; object-fit:cover; }
+.nc-avatar span{ font-weight:700; font-size:20px; }
+
+/* =========================
+   ANIMATIONS
+   ========================= */
+@keyframes ncFadeSlide{
+  from{ opacity:0; transform:translateX(-8px); }
+  to{ opacity:1; transform:translateX(0); }
+}
+.nc-anim{ animation:ncFadeSlide .35s ease both; }
+.nc-menu .nc-anim:nth-child(1){ animation-delay:.05s; }
+.nc-menu .nc-anim:nth-child(2){ animation-delay:.10s; }
+.nc-menu .nc-anim:nth-child(3){ animation-delay:.15s; }
+.nc-menu .nc-anim:nth-child(4){ animation-delay:.20s; }
+
+@keyframes pageFadeUp{
+  from{ opacity:0; transform:translateY(6px); }
+  to{ opacity:1; transform:translateY(0); }
+}
+.page-fade{ animation: pageFadeUp .35s ease; }
+.slide-in{ animation: pageFadeUp .15s ease; }
+
+.no-underline, .btn-link{ text-decoration:none !important; }
+
+/* =========================
+   DESKTOP CENTER NAV underline
+   ========================= */
+.nc-desktop-nav .nav-link{
+  position:relative;
+  padding-inline:.6rem;
+  text-decoration:none;
+}
+.nc-desktop-nav .nav-link::after{
+  content:"";
+  position:absolute;
+  left:12%;
+  right:12%;
+  bottom:-6px;
+  height:2px;
+  background: color-mix(in srgb, var(--primary) 85%, transparent);
+  transform:scaleX(0);
+  transform-origin:center;
+  transition: transform .25s ease;
+  border-radius:2px;
+}
+.nc-desktop-nav .nav-link:hover::after,
+.nc-desktop-nav .nav-link.active::after{ transform:scaleX(1); }
+.nc-desktop-nav .nav-link:hover{ opacity:1; }
+
+/* =========================
+   DASHBOARD TOP LINKS
+   ========================= */
+.dash-nav{
+  display:flex;
+  flex-direction:row;
+  justify-content:center;
+  gap:2.4rem;
+}
+.dash-nav .dash-link{
+  color:#000 !important;
+  font-weight:500;
+  letter-spacing:.4px;
+  text-decoration:none;
+  position:relative;
+  padding-bottom:6px;
+}
+.dash-nav .dash-link::after{
+  content:"";
+  position:absolute;
+  left:0; bottom:0;
+  width:100%; height:2px;
+  background:#3b82f6;
+  transform:scaleX(0);
+  transform-origin:center;
+  transition: transform .22s ease;
+}
+.dash-nav .dash-link:hover::after,
+.dash-nav .dash-link.active::after{ transform:scaleX(1); }
+:root[data-theme="dark"] .dash-nav .dash-link{ color:#e9ecef !important; }
+:root[data-theme="dark"] .dash-nav .dash-link::after{ background:#60a5fa; }
+
+/* =========================
+   ROOM/DEVICE ICON BLOCKS (old screens)
+   ========================= */
+.room-icon, .device-icon{
+  width:44px; height:44px;
+  border-radius:12px;
+  display:grid;
+  place-items:center;
+  background: color-mix(in srgb, var(--primary) 10%, transparent);
+  color:var(--primary);
+  border:1px solid var(--border);
+}
+
+.badge.border{
+  border-color:var(--border) !important;
+  background:var(--surface);
+}
+
+/* Dropdown never clipped */
+.room-card{ position:relative; overflow:visible; z-index:1; }
+.room-card .dropdown-menu{ z-index:5000; }
+.room-card:has(.dropdown-menu.show){ z-index:9999; }
+
+/* Desktop profile dropdown card */
+.profile-card-dropdown{ width:340px; border-radius:16px; }
+
+.object-fit-cover{ object-fit:cover; }
+
+/* =========================
+   GLASS PANELS (reuse)
+   ========================= */
+.glass-panel{
+  border-radius:22px;
+  background:
+    radial-gradient(1200px 300px at 20% 0%, color-mix(in srgb, var(--primary) 14%, transparent), transparent 55%),
+    color-mix(in srgb, var(--surface) 86%, transparent);
+  border:1px solid color-mix(in srgb, var(--border) 90%, transparent);
+  box-shadow:0 22px 60px rgba(0,0,0,.14);
+  backdrop-filter: blur(12px) saturate(135%);
+  -webkit-backdrop-filter: blur(12px) saturate(135%);
+}
+
+/* =========================
+   ROOM / DEVICE SHARED TOKENS
+   ========================= */
+.room-chip{
+  font-size:.78rem;
+  padding:6px 10px;
+  border-radius:999px;
+  background: color-mix(in srgb, var(--surface) 90%, transparent);
+  border:1px solid color-mix(in srgb, var(--border) 90%, transparent);
+  color:var(--text);
+  font-weight:800;
+}
+
+.room-pill{
+  font-size:.78rem;
+  font-weight:900;
+  padding:6px 10px;
+  border-radius:999px;
+  border:1px solid color-mix(in srgb, var(--border) 90%, transparent);
+  background: color-mix(in srgb, var(--surface) 88%, transparent);
+  color:var(--text);
+}
+.room-pill.pill-on{
+  background: color-mix(in srgb, rgba(34,197,94,.22) 100%, var(--surface));
+}
+.room-pill.pill-off{
+  background: color-mix(in srgb, rgba(148,163,184,.18) 100%, var(--surface));
+}
+
+/* kebab button (single) */
+.room-kebab{
+  width:38px; height:38px;
+  border-radius:12px;
+  border:1px solid color-mix(in srgb, var(--border) 90%, transparent);
+  background: color-mix(in srgb, var(--surface) 88%, transparent);
+  color:var(--text);
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  transition: transform .15s ease, opacity .15s ease;
+}
+.room-kebab:hover{ transform: translateY(-1px); opacity:.95; }
+
+/* =========================
+   DEVICE CARD – Glass premium
+   ========================= */
+.device-glass{
+  position:relative;
+  border-radius:22px;
+  padding:14px;
+  background:
+    radial-gradient(1200px 300px at 20% 0%, color-mix(in srgb, var(--primary) 14%, transparent), transparent 55%),
+    color-mix(in srgb, var(--surface) 86%, transparent);
+  border:1px solid color-mix(in srgb, var(--border) 90%, transparent);
+  box-shadow:0 18px 52px rgba(0,0,0,.12);
+  backdrop-filter: blur(12px) saturate(135%);
+  -webkit-backdrop-filter: blur(12px) saturate(135%);
+  overflow:hidden;
+  transition: transform .22s ease, box-shadow .22s ease, border-color .22s ease;
+}
+.device-glass::before{
+  content:"";
+  position:absolute;
+  left:10px;
+  top:14px;
+  bottom:14px;
+  width:7px;
+  border-radius:999px;
+  background: rgba(148,163,184,.75);
+}
+.device-glass.is-on::before{
+  background: rgba(34,197,94,.95);
+  box-shadow: 0 0 0 4px rgba(34,197,94,.10);
+}
+.device-glass:hover{
+  transform: translateY(-4px);
+  box-shadow: 0 30px 72px rgba(0,0,0,.16);
+  border-color: color-mix(in srgb, var(--primary) 25%, var(--border));
+}
+
+.device-top{
+  display:flex;
+  align-items:flex-start;
+  gap:12px;
+  padding-left:14px;
+}
+.device-iconbox{
+  width:54px; height:54px;
+  border-radius:18px;
+  display:grid;
+  place-items:center;
+  background: color-mix(in srgb, var(--primary) 18%, var(--surface));
+  border:1px solid color-mix(in srgb, var(--border) 90%, transparent);
+  color:var(--primary);
+  box-shadow: 0 16px 30px rgba(0,0,0,.10);
+  flex:0 0 auto;
+}
+.device-title-row{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+}
+.device-title{
+  font-weight:950;
+  letter-spacing:.2px;
+  color:var(--text);
+  line-height:1.15;
+}
+.device-sub{
+  font-size:.86rem;
+  margin-top:2px;
+  display:flex;
+  align-items:center;
+  flex-wrap:wrap;
+  gap:8px;
+}
+.device-sep{ opacity:.6; }
+.device-id{
+  padding:2px 8px;
+  border-radius:999px;
+  border:1px solid color-mix(in srgb, var(--border) 90%, transparent);
+  background: color-mix(in srgb, var(--surface) 90%, transparent);
+  font-weight:800;
+}
+.device-dot{
+  width:10px; height:10px;
+  border-radius:999px;
+  border:2px solid color-mix(in srgb, var(--border) 90%, transparent);
+  flex:0 0 auto;
+}
+.device-dot.dot-on{ background: rgba(34,197,94,.95); }
+.device-dot.dot-off{ background: rgba(148,163,184,.65); }
+
+.device-bottom{
+  margin-top:12px;
+  padding-left:14px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+}
+.device-switch{ transform: scale(1.08); }
+
+/* =========================
+   ROOMS – Compact clickable tiles
+   ========================= */
+.room-tile{
+  border-radius:20px;
+  padding:14px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  background:
+    radial-gradient(900px 260px at 18% 0%, color-mix(in srgb, var(--primary) 12%, transparent), transparent 58%),
+    color-mix(in srgb, var(--surface) 88%, transparent);
+  border:1px solid color-mix(in srgb, var(--border) 90%, transparent);
+  box-shadow: 0 16px 46px rgba(0,0,0,.10);
+  backdrop-filter: blur(10px) saturate(130%);
+  -webkit-backdrop-filter: blur(10px) saturate(130%);
+  transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease;
+}
+.room-tile:hover{
+  transform: translateY(-3px);
+  box-shadow: 0 26px 64px rgba(0,0,0,.19);
+  border-color: color-mix(in srgb, var(--primary) 22%, var(--border));
+}
+
+.room-tile-icon{
+  width:52px; height:52px;
+  border-radius:18px;
+  display:grid;
+  place-items:center;
+  background: color-mix(in srgb, var(--primary) 16%, var(--surface));
+  border:1px solid color-mix(in srgb, var(--border) 90%, transparent);
+  color:var(--primary);
+  box-shadow: 0 14px 26px rgba(0,0,0,.10);
+  flex:0 0 auto;
+}
+
+.room-tile-name{
+  font-weight:650;
+  letter-spacing:.5px;
+  color:var(--text);
+  font-size: 1.09rem;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+
+@media (max-width:480px){
+  .room-tile{ padding:12px; border-radius:18px; }
+  .room-tile-icon{ width:48px; height:48px; border-radius:16px; }
+}
+
+/* chatbot.css */
+
+.chatbot-button {
+  position: fixed;
+  right: 20px;
+  bottom: 20px;
+  border-radius: 50%;
+  width: 56px;
+  height: 56px;
+  background-color: var(--primary); /* theme variable */
+  color: var(--text); /* theme variable */
+  border: none;
+  font-size: 22px;
+  z-index: 999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.chatbot-panel {
+  position: fixed;
+  right: 20px;
+  bottom: 90px;
+  width: 300px;
+  background-color: var(--surface); /* adapts to light/dark */
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+  z-index: 999;
+  color: var(--text); /* text adapts */
+}
+
+.chatbot-panel .header {
+  padding: 0.5rem;
+  font-weight: bold;
+  border-bottom: 1px solid var(--border);
+}
+
+.chatbot-panel .commands {
+  padding: 0.5rem;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.chatbot-panel .input-row {
+  padding: 0.5rem;
+  display: flex;
+  gap: 0.25rem;
+}
+
+.chatbot-panel .form-control {
+  flex: 1;
+}
