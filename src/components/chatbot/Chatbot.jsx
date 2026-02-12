@@ -3,13 +3,14 @@ import { parseCommand } from "../../utils/commandParser";
 import { motion, AnimatePresence } from "framer-motion";
 import { FaCommentDots, FaMicrophone, FaPaperPlane } from "react-icons/fa";
 
-export default function Chatbot({ devices, uid }) {
+export default function Chatbot({ devices = [], uid }) {
   const [open, setOpen] = useState(false);
   const [text, setText] = useState("");
 
   const send = () => {
-    if (!text.trim()) return;
-    parseCommand(text, devices, uid);
+    const t = text.trim();
+    if (!t) return;
+    parseCommand(t, devices, uid);
     setText("");
   };
 
@@ -23,11 +24,22 @@ export default function Chatbot({ devices, uid }) {
     }
 
     const recognition = new SpeechRecognition();
-    recognition.lang = "en-US";
+
+    // Prefer Pakistan English; fallback works fine
+    recognition.lang = "en-PK";
+    recognition.interimResults = false;
+    recognition.maxAlternatives = 1;
 
     recognition.onresult = (e) => {
-      const spoken = e.results[0][0].transcript;
-      parseCommand(spoken, devices, uid);
+      const spoken = e.results?.[0]?.[0]?.transcript || "";
+      if (spoken.trim()) {
+        parseCommand(spoken, devices, uid);
+        setText("");
+      }
+    };
+
+    recognition.onerror = () => {
+      alert("Voice recognition failed. Try again.");
     };
 
     recognition.start();
@@ -35,16 +47,14 @@ export default function Chatbot({ devices, uid }) {
 
   return (
     <>
-      {/* Floating Button */}
       <motion.button
-        onClick={() => setOpen(!open)}
+        onClick={() => setOpen((v) => !v)}
         whileTap={{ scale: 0.9 }}
         className="chatbot-button"
       >
         <FaCommentDots size={24} />
       </motion.button>
 
-      {/* Chat Panel */}
       <AnimatePresence>
         {open && (
           <motion.div
@@ -57,9 +67,10 @@ export default function Chatbot({ devices, uid }) {
             <div className="header">Nova Assistant</div>
 
             <div className="commands">
-              Try commands: <br />
-              “Light on” <br />
-              “Fan off”
+              Try: <br />
+              “Main light on” <br />
+              “All lights off” <br />
+              “Fan band”
             </div>
 
             <div className="input-row">

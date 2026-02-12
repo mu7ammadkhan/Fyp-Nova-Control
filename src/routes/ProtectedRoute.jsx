@@ -5,11 +5,13 @@ import { useAuthContext } from "../context/AuthContext";
 export default function ProtectedRoute() {
   const { user, loading } = useAuthContext();
 
-  // jab tak auth resolve nahi hota, kuch protected mat dikhao
   if (loading) {
     return (
-      <div style={{ minHeight: "60vh" }} className="d-flex align-items-center justify-content-center">
-        <div className="spinner-border text-primary" role="status" aria-hidden="true" />
+      <div
+        style={{ minHeight: "60vh" }}
+        className="d-flex align-items-center justify-content-center"
+      >
+        <div className="spinner-border text-primary" role="status" />
       </div>
     );
   }

@@ -102,6 +102,7 @@ export default function RoomsPage() {
           onClick={() => setShowAdd((s) => !s)}
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
+          type="button"
         >
           <FaPlus /> Add Room
         </motion.button>
@@ -128,7 +129,9 @@ export default function RoomsPage() {
               A unique <strong>Room ID</strong> will be generated automatically.
             </div>
             {addErr && (
-              <div className="alert alert-warning py-2 px-3 mt-2 mb-0">{addErr}</div>
+              <div className="alert alert-warning py-2 px-3 mt-2 mb-0">
+                {addErr}
+              </div>
             )}
             <div className="mt-3 d-flex gap-2">
               <motion.button
@@ -137,14 +140,21 @@ export default function RoomsPage() {
                 disabled={saving}
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
+                type="button"
               >
-                {saving ? "Saving..." : <> <FaSave /> Save</>}
+                {saving ? "Saving..." : (
+                  <>
+                    <FaSave /> Save
+                  </>
+                )}
               </motion.button>
+
               <motion.button
                 className="btn btn-outline-secondary d-flex align-items-center gap-1"
                 onClick={() => setShowAdd(false)}
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
+                type="button"
               >
                 <FaTimes /> Cancel
               </motion.button>
@@ -196,14 +206,19 @@ export default function RoomsPage() {
                     onClick={(e) => e.stopPropagation()}
                     whileHover={{ scale: 1.1 }}
                     whileTap={{ scale: 0.95 }}
+                    type="button"
                   >
                     <FaEllipsisV />
                   </motion.button>
 
-                  <ul className="dropdown-menu dropdown-menu-end" onClick={(e) => e.stopPropagation()}>
+                  <ul
+                    className="dropdown-menu dropdown-menu-end"
+                    onClick={(e) => e.stopPropagation()}
+                  >
                     <li>
                       <button
                         className="dropdown-item"
+                        type="button"
                         onClick={() => {
                           const name = prompt("Enter new name:", r.name);
                           if (name) handleRename(r.id, name);
@@ -213,7 +228,11 @@ export default function RoomsPage() {
                       </button>
                     </li>
                     <li>
-                      <button className="dropdown-item text-danger" onClick={() => handleDelete(r.id)}>
+                      <button
+                        className="dropdown-item text-danger"
+                        type="button"
+                        onClick={() => handleDelete(r.id)}
+                      >
                         Delete
                       </button>
                     </li>

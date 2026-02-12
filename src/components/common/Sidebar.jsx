@@ -22,15 +22,32 @@ export default function Sidebar() {
   const fallbackName =
     user?.displayName || (email ? email.split("@")[0] : "User");
 
+  // ✅ Single source of truth: Firestore user doc
   useEffect(() => {
     let alive = true;
+
     (async () => {
       if (!user) return;
-      const snap = await getDoc(doc(db, "users", user.uid));
+
+      const ref = doc(db, "users", user.uid);
+      const snap = await getDoc(ref);
       if (!alive) return;
-      const d = snap.exists() ? snap.data() : {};
-      setName(d?.name || fallbackName);
-      setPhotoURL(d?.photoURL || user?.photoURL || "");
+
+      if (snap.exists()) {
+        const d = snap.data();
+        setName(d?.name || fallbackName);
+        setPhotoURL(d?.photoURL || ""); // ✅ DO NOT mix auth.photoURL here
+      } else {
+        // create user doc if missing
+        await setDoc(
+          ref,
+          { email, name: fallbackName, photoURL: "", createdAt: Date.now() },
+          { merge: true }
+        );
+        if (!alive) return;
+        setName(fallbackName);
+        setPhotoURL("");
+      }
     })();
 
     return () => {
@@ -45,27 +62,21 @@ export default function Sidebar() {
     if (!offEl) return;
 
     try {
-      // Get or create instance then hide
       const inst = window?.bootstrap?.Offcanvas?.getOrCreateInstance(offEl);
       inst?.hide();
-    } catch (_) {
-      // ignore
-    }
+    } catch (_) {}
 
-    // Fallback: force remove "show" + backdrop + body scroll lock
     offEl.classList.remove("show");
     offEl.setAttribute("aria-hidden", "true");
     document.body.classList.remove("offcanvas-backdrop", "modal-open");
     document.body.style.removeProperty("overflow");
     document.body.style.removeProperty("padding-right");
 
-    // Remove any bootstrap backdrop nodes
     document.querySelectorAll(".offcanvas-backdrop").forEach((b) => b.remove());
   };
 
   const go = (to) => {
     navigate(to);
-    // ✅ delay a bit so navigation happens then close cleanly
     setTimeout(hardCloseOffcanvas, 80);
   };
 
@@ -94,6 +105,8 @@ export default function Sidebar() {
 
   const onSaveProfile = async (e) => {
     e.preventDefault();
+    if (!user) return;
+
     const newName = e.target.elements["nc-name"].value.trim();
     const file = e.target.elements["nc-photo"].files[0];
 
@@ -105,35 +118,46 @@ export default function Sidebar() {
           return alert("Please choose an image ≤ 5MB");
         }
         const blob = await resizeImageToBlob(file, 384, 0.82);
-        newURL = await uploadToCloudinary(blob);
+        newURL = await uploadToCloudinary(blob); // ✅ now uses correct env var
       }
 
+      // ✅ (Optional but good) Update Firebase Auth display too
       await updateProfile(auth.currentUser, {
         displayName: newName || fallbackName,
         photoURL: newURL || null,
       });
 
+      // ✅ Update Firestore (main source of truth)
       await setDoc(
         doc(db, "users", user.uid),
-        { name: newName || fallbackName, photoURL: newURL, email },
+        {
+          name: newName || fallbackName,
+          photoURL: newURL || "",
+          email,
+          updatedAt: Date.now(),
+        },
         { merge: true }
       );
 
+      // ✅ Update local UI
       setName(newName || fallbackName);
-      setPhotoURL(newURL);
+      setPhotoURL(newURL || "");
 
       // Close modal then sidebar
       const modalEl = document.getElementById("profileEditModal");
       const modal = window?.bootstrap?.Modal?.getOrCreateInstance(modalEl);
       modal?.hide();
       document.activeElement?.blur();
+
       modalEl?.addEventListener("hidden.bs.modal", hardCloseOffcanvas, {
         once: true,
       });
     } catch (err) {
-      alert(err.message || "Failed to update profile");
+      alert(err?.message || "Failed to update profile");
     }
   };
+
+  if (!user) return null;
 
   return (
     <>
@@ -228,6 +252,7 @@ export default function Sidebar() {
         </div>
       </div>
 
+      {/* Profile Edit Modal */}
       <div
         className="modal fade"
         id="profileEditModal"

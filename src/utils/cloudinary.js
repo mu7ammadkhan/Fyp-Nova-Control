@@ -1,7 +1,24 @@
+// src/utils/cloudinary.js
 export async function uploadToCloudinary(fileOrBlob) {
-  const cloud = import.meta.env.VITE_CLOUDINARY_CLOUD;
-  const preset = import.meta.env.VITE_CLOUDINARY_PRESET;
+  // ✅ Same env variable as Navbar.jsx (consistent)
+  const cloud = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME;
+
+  // ✅ Preset fallback (same preset you used in Navbar)
+  const preset =
+    import.meta.env.VITE_CLOUDINARY_PRESET || "smart_home_preset_67";
+
   const folder = import.meta.env.VITE_CLOUDINARY_FOLDER || "profile_pics";
+
+  if (!cloud) {
+    throw new Error(
+      "Cloudinary cloud name missing. Add VITE_CLOUDINARY_CLOUD_NAME in .env"
+    );
+  }
+  if (!preset) {
+    throw new Error(
+      "Cloudinary upload preset missing. Add VITE_CLOUDINARY_PRESET in .env"
+    );
+  }
 
   const url = `https://api.cloudinary.com/v1_1/${cloud}/image/upload`;
   const fd = new FormData();
@@ -20,5 +37,7 @@ export async function uploadToCloudinary(fileOrBlob) {
       throw new Error(text);
     }
   }
-  return JSON.parse(text).secure_url;
+
+  const json = JSON.parse(text);
+  return json.secure_url;
 }
