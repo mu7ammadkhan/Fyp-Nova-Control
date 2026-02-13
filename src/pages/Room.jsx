@@ -20,6 +20,28 @@ export default function RoomsPage() {
   const [saving, setSaving] = useState(false);
   const [addErr, setAddErr] = useState("");
 
+  // ✅ Track which dropdown is currently open (for z-index fix)
+  const [openMenuId, setOpenMenuId] = useState(null);
+
+  // ✅ Listen to Bootstrap dropdown events globally (works even with framer-motion/backdrop-filter)
+  useEffect(() => {
+    const onShown = (e) => {
+      const btn = e?.target;
+      const item = btn?.closest?.("[data-room-id]");
+      if (item) setOpenMenuId(item.getAttribute("data-room-id"));
+    };
+
+    const onHidden = () => setOpenMenuId(null);
+
+    document.addEventListener("shown.bs.dropdown", onShown);
+    document.addEventListener("hidden.bs.dropdown", onHidden);
+
+    return () => {
+      document.removeEventListener("shown.bs.dropdown", onShown);
+      document.removeEventListener("hidden.bs.dropdown", onHidden);
+    };
+  }, []);
+
   // Fetch rooms with device counts
   useEffect(() => {
     if (!uid) return;
@@ -92,9 +114,7 @@ export default function RoomsPage() {
       <div className="d-flex justify-content-between align-items-start mb-3">
         <div>
           <h3 className="mb-1">Rooms</h3>
-          <p className="text-muted mb-0">
-            Create rooms and map devices via unique ID.
-          </p>
+          <p className="text-muted mb-0">Create rooms and map devices via unique ID.</p>
         </div>
 
         <motion.button
@@ -128,11 +148,11 @@ export default function RoomsPage() {
             <div className="small text-muted mt-1">
               A unique <strong>Room ID</strong> will be generated automatically.
             </div>
+
             {addErr && (
-              <div className="alert alert-warning py-2 px-3 mt-2 mb-0">
-                {addErr}
-              </div>
+              <div className="alert alert-warning py-2 px-3 mt-2 mb-0">{addErr}</div>
             )}
+
             <div className="mt-3 d-flex gap-2">
               <motion.button
                 className="btn roomd-primary d-flex align-items-center gap-1"
@@ -142,7 +162,9 @@ export default function RoomsPage() {
                 whileTap={{ scale: 0.95 }}
                 type="button"
               >
-                {saving ? "Saving..." : (
+                {saving ? (
+                  "Saving..."
+                ) : (
                   <>
                     <FaSave /> Save
                   </>
@@ -171,8 +193,11 @@ export default function RoomsPage() {
         <div className="row g-3">
           {rooms.map((r) => (
             <motion.div
-              className="col-12 col-md-6 col-lg-4"
               key={r.id}
+              data-room-id={r.id}
+              className={`col-12 col-md-6 col-lg-4 room-grid-item ${
+                openMenuId === r.id ? "room-grid-item--open" : ""
+              }`}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: 20 }}
@@ -203,6 +228,8 @@ export default function RoomsPage() {
                   <motion.button
                     className="btn btn-sm room-kebab"
                     data-bs-toggle="dropdown"
+                    data-bs-display="static"
+                    data-bs-boundary="window"
                     onClick={(e) => e.stopPropagation()}
                     whileHover={{ scale: 1.1 }}
                     whileTap={{ scale: 0.95 }}

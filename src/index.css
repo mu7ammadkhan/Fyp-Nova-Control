@@ -636,3 +636,42 @@ input:-webkit-autofill:focus{
 .chatbot-panel .form-control {
   flex: 1;
 }
+
+.room-card {
+  position: relative;
+  overflow: visible !important;
+  z-index: 1;
+}
+
+/* FIX: prevent blur stacking issue for dropdown */
+.room-tile{
+  overflow: visible !important;
+  position: relative;
+}
+
+.room-tile .dropdown-menu{
+  z-index: 99999 !important;
+}
+
+/* 🔥 THIS IS THE REAL FIX */
+.room-tile{
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+/* GUARANTEED FIX: lift the whole grid item above others when menu is open */
+.room-grid-item{
+  position: relative;
+  overflow: visible !important;
+  z-index: 1;
+  isolation: isolate;
+}
+
+.room-grid-item--open{
+  z-index: 999999 !important;
+}
+
+/* keep dropdown above everything */
+.room-grid-item--open .dropdown-menu{
+  z-index: 1000000 !important;
+}

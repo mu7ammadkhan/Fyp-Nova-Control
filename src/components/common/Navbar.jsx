@@ -10,7 +10,9 @@ import LoginSidebar from "./LoginSidebar";
 import { useEffect, useMemo, useState } from "react";
 
 const CLOUD_NAME = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME;
-const UNSIGNED_PRESET = "smart_home_preset_67";
+const UNSIGNED_PRESET = import.meta.env.VITE_CLOUDINARY_PRESET || "smart_home_preset_67";
+const CLOUDINARY_FOLDER = import.meta.env.VITE_CLOUDINARY_FOLDER || "profile_pics";
+
 const UPLOAD_URL = CLOUD_NAME
   ? `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`
   : null;
@@ -47,9 +49,11 @@ export default function Navbar() {
   // Fetch/create user doc
   useEffect(() => {
     let mounted = true;
+
     (async () => {
       try {
         if (!user) return;
+
         const ref = doc(db, "users", user.uid);
         const snap = await getDoc(ref);
         if (!mounted) return;
@@ -67,6 +71,7 @@ export default function Navbar() {
             photoURL: "",
             createdAt: Date.now(),
           });
+
           setProfile({
             name: user.email?.split("@")[0] || "",
             photoURL: "",
@@ -107,7 +112,7 @@ export default function Navbar() {
       const form = new FormData();
       form.append("file", file);
       form.append("upload_preset", UNSIGNED_PRESET);
-      form.append("folder", "profile_pics");
+      form.append("folder", CLOUDINARY_FOLDER);
 
       const res = await fetch(UPLOAD_URL, { method: "POST", body: form });
       const json = await res.json();
@@ -118,7 +123,7 @@ export default function Navbar() {
         throw new Error(json?.error?.message || "Upload failed");
       }
     } catch (e) {
-      setPError(e.message || "Upload failed");
+      setPError(e?.message || "Upload failed");
     } finally {
       setUploading(false);
     }
@@ -148,7 +153,9 @@ export default function Navbar() {
   return (
     <>
       <nav
-        className={`navbar shadow-sm nav-3d sticky-top ${isDark ? "navbar-dark" : "navbar-light"}`}
+        className={`navbar shadow-sm nav-3d sticky-top ${
+          isDark ? "navbar-dark" : "navbar-light"
+        }`}
       >
         <div className="container d-flex align-items-center">
           {/* Brand */}
@@ -168,27 +175,31 @@ export default function Navbar() {
               <li className="nav-item">
                 <NavLink
                   to="/dashboard"
-                  className={({ isActive }) => "nav-link dash-link" + (isActive ? " active" : "")}
+                  className={({ isActive }) =>
+                    "nav-link dash-link" + (isActive ? " active" : "")
+                  }
                 >
                   Dashboard
                 </NavLink>
               </li>
 
               <li className="nav-item">
-                {/* ✅ Use real route */}
                 <NavLink
                   to="/room"
-                  className={({ isActive }) => "nav-link dash-link" + (isActive ? " active" : "")}
+                  className={({ isActive }) =>
+                    "nav-link dash-link" + (isActive ? " active" : "")
+                  }
                 >
                   Rooms
                 </NavLink>
               </li>
 
               <li className="nav-item">
-                {/* ✅ Real route */}
                 <NavLink
                   to="/devices"
-                  className={({ isActive }) => "nav-link dash-link" + (isActive ? " active" : "")}
+                  className={({ isActive }) =>
+                    "nav-link dash-link" + (isActive ? " active" : "")
+                  }
                 >
                   Devices
                 </NavLink>
@@ -242,7 +253,9 @@ export default function Navbar() {
                     <input
                       className="form-control"
                       value={profile.name}
-                      onChange={(e) => setProfile((p) => ({ ...p, name: e.target.value }))}
+                      onChange={(e) =>
+                        setProfile((p) => ({ ...p, name: e.target.value }))
+                      }
                       placeholder="Your name"
                     />
                   </div>
@@ -257,56 +270,31 @@ export default function Navbar() {
                       onChange={(e) => uploadAvatar(e.target.files?.[0])}
                       disabled={uploading}
                     />
-                    {uploading && <div className="small text-muted mt-1">Uploading…</div>}
+                    {uploading && (
+                      <div className="small text-muted mt-1">Uploading…</div>
+                    )}
                   </div>
 
-                  {pError && <div className="alert alert-danger py-2 small mb-2">{pError}</div>}
+                  {pError && (
+                    <div className="alert alert-danger py-2 small mb-2">
+                      {pError}
+                    </div>
+                  )}
 
-                  <div className="d-flex gap-2">
-                    <button
-                      className="btn btn-primary flex-grow-1"
-                      onClick={saveProfile}
-                      disabled={saving}
-                    >
-                      {saving ? "Saving…" : "Save"}
-                    </button>
-
-                    <NavLink to="/profile" className="btn btn-outline-secondary">
-                      Full Profile
-                    </NavLink>
-                  </div>
-
-                  <div className="d-flex justify-content-between align-items-center mt-3">
-                    <button
-                      className="btn btn-outline-secondary icon-btn"
-                      onClick={toggle}
-                      aria-label={isDark ? "Switch to light" : "Switch to dark"}
-                      title={isDark ? "Light" : "Dark"}
-                    >
-                      <i className={isDark ? "fa-solid fa-sun" : "fa-solid fa-moon"} />
-                    </button>
-
-                    <button className="btn btn-outline-danger" onClick={onLogout}>
-                      Logout
-                    </button>
-                  </div>
+                  {/* ✅ Only Save button (Full Profile removed) */}
+                  <button
+                    className="btn btn-primary w-100"
+                    onClick={saveProfile}
+                    disabled={saving}
+                  >
+                    {saving ? "Saving…" : "Save"}
+                  </button>
                 </div>
               </li>
             </ul>
           )}
 
           <div className="d-flex align-items-center gap-2 ms-auto">
-            {/* Admin panel visible only when not inside app */}
-            {(!user || !onApp) && (
-              <NavLink
-                className="btn btn-link no-underline d-none d-sm-inline-flex align-items-center"
-                to="/admin-login"
-              >
-                <i className="fa-solid fa-shield-halved" />
-                <span className="ms-1">Admin Panel</span>
-              </NavLink>
-            )}
-
             {/* Theme toggle (md+) */}
             <button
               className="btn btn-outline-secondary d-none d-md-inline-flex align-items-center justify-content-center"
