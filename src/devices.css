@@ -1,7 +1,7 @@
 ﻿/* Match the Dashboard's hierarchy, palette and card treatment. */
 .devices-dashboard-page{padding-bottom:105px}
 .devices-dashboard-page .workspace-button{gap:10px;border:0;min-height:44px}
-.devices-welcome{min-height:250px}
+.devices-welcome{min-height:250px;margin-bottom:24px}
 .devices-hero-art{position:relative;width:290px;height:190px;flex-shrink:0;display:grid;place-items:center;margin-right:24px}
 .devices-hero-orbit{position:absolute;width:170px;height:170px;border:1px solid #ffffff16;border-radius:50%}.devices-hero-orbit.orbit-outer{width:240px;height:240px}
 .devices-hero-power{display:grid;place-items:center;width:108px;height:108px;border:1px solid #ffffff40;border-radius:30px;background:#ffffff12;color:#d4eaff;font-size:48px}
@@ -16,3 +16,4 @@
 @media(max-width:991px){.devices-hero-art{width:210px}.devices-control-panel .device-toolbar{align-items:flex-start;flex-direction:column}.devices-control-panel .manage-filters{width:100%}.devices-control-panel .manage-filters>.manage-input{width:180px}.devices-control-panel .manage-search{width:auto}}
 @media(max-width:767px){.devices-welcome{padding:26px;min-height:230px}.devices-hero-art{width:160px}.devices-hero-power{width:82px;height:82px;border-radius:24px;font-size:36px}.devices-hero-orbit{width:135px;height:135px}.devices-hero-orbit.orbit-outer{width:190px;height:190px}.devices-hero-chip{font-size:9px;padding:8px 10px;right:0}.devices-control-panel{padding:20px}.devices-section-heading{gap:12px}.devices-section-heading h2{font-size:17px}.devices-control-panel .manage-filters>.manage-input{width:auto;flex:1 1 120px}.devices-control-panel .manage-search{flex:1 1 180px}.devices-control-panel .power-card{padding-inline:20px}.devices-result-count{font-size:9px}.devices-control-panel .manage-tabs{width:100%}.devices-control-panel .manage-tabs button{flex:1}.devices-panel-footer{font-size:9px}}
 @media(max-width:575px){.devices-hero-art{display:none}.devices-control-panel{padding:17px}.devices-section-heading p{font-size:11px}.devices-control-panel .power-card{padding-inline:17px}.devices-control-panel .power-device-info h2{font-size:20px}.devices-control-panel .power-button{width:66px;height:66px}.devices-section-heading{align-items:flex-start}.devices-result-count{padding:6px 8px}.devices-filter-summary{font-size:9px}}
+@media(max-width:767px){.devices-control-panel .device-control-grid{gap:12px}.devices-control-panel .power-card{padding:13px 15px 0;border-radius:12px}.devices-control-panel .power-card-header{margin-bottom:9px}.devices-control-panel .power-device-info h2{font-size:17px;margin-bottom:7px}.devices-control-panel .power-button{width:58px;height:58px}.devices-control-panel .power-button>svg{font-size:23px}}
