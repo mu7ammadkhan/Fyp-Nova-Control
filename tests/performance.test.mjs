@@ -13,6 +13,19 @@ import { routeTree } from "../src/routes/routeTree.js";
 import { paths, roomPath, canonicalPath, isSectionActive } from "../src/routes/paths.js";
 import { getReturnTo } from "../src/routes/returnTo.js";
 import { trimBootstrapCss } from "../build/trimBootstrapCss.js";
+import { resolveProfilePhoto } from "../src/utils/profilePhoto.js";
+
+test("profile photo waits for saved data instead of flashing an old provider photo", () => {
+  assert.equal(resolveProfilePhoto(null, "old-provider.jpg", false), "");
+  assert.equal(resolveProfilePhoto({ photoURL: "current.jpg" }, "old-provider.jpg", true), "current.jpg");
+  assert.equal(resolveProfilePhoto(null, "provider.jpg", true), "provider.jpg");
+});
+
+test("an explicitly cleared profile photo never restores an older provider photo", () => {
+  for (const photoURL of ["", null]) {
+    assert.equal(resolveProfilePhoto({ photoURL }, "old-provider.jpg", true), "");
+  }
+});
 
 test("concurrent requests share work; fresh results are reused until expiry", async () => {
   let time = 0;

@@ -11,13 +11,14 @@ import { useHomeData } from "../hooks/useHomeData";
 import { useTheme } from "../hooks/useTheme";
 import { resizeImageToBlob } from "../utils/image";
 import { uploadToCloudinary } from "../utils/cloudinary";
+import { resolveProfilePhoto } from "../utils/profilePhoto";
 
 export default function Profile() {
   const { user } = useAuthContext();
   const { theme, toggle } = useTheme();
   const { profile, profileLoaded, profileError } = useHomeData(user.uid);
   const savedName = profile?.name || user.displayName || user.email?.split("@")[0] || "";
-  const savedPhoto = profile?.photoURL ?? user.photoURL ?? "";
+  const savedPhoto = resolveProfilePhoto(profile, user.photoURL, profileLoaded && !profileError);
   const [activeTab, setActiveTab] = useState("personal");
   const [draftName, setDraftName] = useState(null);
   const [file, setFile] = useState(null);
@@ -35,7 +36,7 @@ export default function Profile() {
   const clearSelection = () => { setFile(null); setPreview(""); if (fileInput.current) fileInput.current.value=""; };
   const cancel = () => { setDraftName(null); clearSelection(); setError(""); setSuccess(""); };
   const save = async (event) => {
-    event.preventDefault(); setError(""); setSuccess("");
+    event.preventDefault(); if (saving || !profileLoaded || profileError) return; setError(""); setSuccess("");
     if (!name.trim()) { setError("Please enter your full name."); return; }
     setSaving(true);
     try {
@@ -54,7 +55,7 @@ export default function Profile() {
     }
     setFile(selected); setPreview(URL.createObjectURL(selected));
   };
-  const avatar = (photo, label) => photo ? <img src={photo} alt={label} width="88" height="88" /> : <span aria-label={label}>{initials}</span>;
+  const avatar = (photo, label) => photo ? <img key={photo} src={photo} alt={label} width="88" height="88" /> : <span aria-label={label}>{initials}</span>;
   return <main className="container manage-page profile-page">
     <header className="profile-page-heading"><div><span className="workspace-eyebrow">MAKE IT YOURS</span><h1>My profile</h1><p>Your personal space in Nova Control.</p></div></header>
     <div className="profile-workspace">
@@ -66,7 +67,7 @@ export default function Profile() {
           <form onSubmit={save} aria-busy={saving}><div className="profile-photo-strip"><div className="profile-photo-preview">{avatar(preview || savedPhoto,"Selected profile photo")}<span><FiCamera /></span></div><div className="profile-photo-copy"><h3>Profile photo</h3><p>JPG, PNG or WebP. Maximum 5 MB.</p><div className="profile-photo-controls"><label className="profile-upload-action"><FiUploadCloud />{file ? "Change selection" : "Upload photo"}<input ref={fileInput} id="profile-photo" aria-label="Upload profile photo" type="file" accept="image/jpeg,image/png,image/webp" onChange={chooseFile} disabled={saving || !profileLoaded} /></label>{file && <button type="button" className="profile-clear-photo" onClick={clearSelection} disabled={saving}>Remove selection</button>}</div>{file && <small className="profile-file-name">{file.name}</small>}</div></div>
             <div className="profile-form-grid"><div className="profile-form-field"><label htmlFor="profile-name">Full name</label><div className="profile-field-input"><FiUser /><input id="profile-name" value={name} onChange={(event) => {setDraftName(event.target.value);setSuccess("");}} required maxLength={100} disabled={saving || !profileLoaded} autoComplete="name" placeholder="Enter your full name" /></div><small>This name appears on your dashboard.</small></div><div className="profile-form-field"><label htmlFor="profile-email">Email address</label><div className="profile-field-input field-readonly"><FiMail /><input id="profile-email" value={user.email || ""} readOnly type="email" /></div><small>Your registered sign-in email.</small></div></div>
             <div className="profile-account-caption"><FiMail /><div><strong>{user.emailVerified ? "Email verified" : "Account email"}</strong><p>{user.emailVerified ? "Your sign-in email has been verified." : "Your email is managed by your sign-in provider."}</p></div></div>
-            <footer className="profile-form-footer"><span>{saving ? "Saving changes..." : !profileLoaded ? "Loading profile..." : profileError ? "Profile sync needs attention." : dirty ? "Unsaved changes" : "All changes saved"}</span><div><button className="manage-secondary" type="button" disabled={saving || !dirty} onClick={cancel}>Cancel</button><button className="workspace-button" disabled={saving || !profileLoaded || !dirty}><FiSave />{saving ? "Saving..." : "Save changes"}</button></div></footer>
+            <footer className="profile-form-footer"><span>{saving ? "Saving changes..." : !profileLoaded ? "Loading profile..." : profileError ? "Profile sync needs attention." : dirty ? "Unsaved changes" : "All changes saved"}</span><div><button className="manage-secondary" type="button" disabled={saving || !dirty} onClick={cancel}>Cancel</button><button className="workspace-button" disabled={saving || !profileLoaded || !!profileError || !dirty}><FiSave />{saving ? "Saving..." : "Save changes"}</button></div></footer>
           </form>
         </div>
         <div className="profile-tab-panel" hidden={activeTab !== "preferences"}><div className="profile-preferences-heading"><h3>Choose your appearance</h3><p>Pick a theme that feels comfortable. Your choice saves automatically.</p></div><div className="profile-themes" role="group" aria-label="Workspace theme">{[["light","Light",FiSun],["dark","Dark",FiMoon]].map(([value,label,ThemeIcon]) => <button key={value} className={"profile-theme theme-"+value} aria-pressed={theme === value} onClick={() => {if(theme !== value) toggle();}}><span className="profile-theme-mock" aria-hidden="true"><i /><span><b /><b /><b /></span></span><span className="profile-theme-title"><span>{createElement(ThemeIcon)}{label}</span><span className="profile-theme-check">{theme === value && <FiCheck />}</span></span></button>)}</div><p className="profile-theme-note"><FiCheck /> Theme applies across your workspace.</p></div>
