@@ -216,12 +216,6 @@ input:-webkit-autofill:focus{
   background-color: #000 !important;
 }
 
-.nc-offcanvas svg,
-.nc-offcanvas i{
-  color: #000 !important;
-  fill: #000 !important;
-  stroke: #000 !important;
-}
 
 /* =====================
    DARK THEME
@@ -234,12 +228,6 @@ input:-webkit-autofill:focus{
   background-color: #fff !important;
 }
 
-:root[data-theme="dark"] .nc-offcanvas svg,
-:root[data-theme="dark"] .nc-offcanvas i{
-  color: #fff !important;
-  fill: #fff !important;
-  stroke: #fff !important;
-}
 
 /* =========================
    Other CSS remains unchanged
