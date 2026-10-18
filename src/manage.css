@@ -50,3 +50,5 @@
 @media(max-width:379px){.power-card{padding-inline:18px}.power-card-body{gap:12px}.power-button{width:68px;height:68px}.power-button>svg{font-size:24px}.power-device-info h2{font-size:20px}.power-card-footer{font-size:9px;gap:8px}}
 
 .sidebar-links a{text-decoration:none}
+/* Shared device cards stay compact on phones, including room detail pages. */
+@media(max-width:767px){.device-control-grid .power-card{padding:13px 15px 0;border-radius:12px}.device-control-grid .power-card-header{margin-bottom:9px}.device-control-grid .power-card-body{gap:12px;padding-bottom:13px}.device-control-grid .power-card h2{font-size:17px;line-height:1.4}.device-control-grid .power-button{width:58px;height:58px;min-width:58px;font-size:23px}.device-control-grid .power-device-id{display:none}.device-control-grid .power-card-footer{padding:10px 0;font-size:10px}.device-control-grid .power-room{font-size:11px}.device-control-grid .manage-icon-button{width:40px;height:40px;min-height:40px}}
