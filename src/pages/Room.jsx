@@ -1,8 +1,10 @@
+import PopupDialog from "../components/common/PopupDialog";
 import { roomPath } from "../routes/paths";
 import "../manage.css";
+import "../rooms.css";
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { FiHome, FiPlus, FiSearch, FiEdit2, FiTrash2, FiArrowUpRight, FiX, FiGrid } from "react-icons/fi";
+import { FiHome, FiPlus, FiSearch, FiEdit2, FiTrash2, FiArrowUpRight, FiX, FiGrid, FiArrowRight, FiPower } from "react-icons/fi";
 import { useAuthContext } from "../hooks/useAuth";
 import { useHomeData } from "../hooks/useHomeData";
 import { addRoom, renameRoom, removeRoom } from "../services/rooms";
@@ -15,7 +17,7 @@ export default function RoomsPage() {
   const [name, setName] = useState("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
-  const visible = rooms.filter((room) => room.name.toLowerCase().includes(search.toLowerCase()));
+  const visible = rooms.filter((room) => room.name.toLowerCase().includes(search.trim().toLowerCase()));
   const counts = new Map();
   devices.forEach((device) => {
     const count = counts.get(device.roomId) || { total: 0, active: 0 };
@@ -24,7 +26,7 @@ export default function RoomsPage() {
   });
   const edit = (room = {}) => { setEditor(room.id || "new"); setName(room.name || ""); setError(""); };
   const save = async (event) => {
-    event.preventDefault(); setSaving(true); setError("");
+    event.preventDefault(); if (saving || !name.trim()) return; setSaving(true); setError("");
     try {
       if (editor === "new") await addRoom(user.uid, name);
       else await renameRoom(user.uid, editor, name);
@@ -39,16 +41,27 @@ export default function RoomsPage() {
     catch { setError("Unable to delete this room. Please try again."); }
   };
   return (
-    <main className="container manage-page">
-      <header className="manage-heading"><div><span className="workspace-eyebrow">YOUR SPACES</span><h1>Rooms</h1><p>A place for every part of your home.</p></div><button className="workspace-button" onClick={() => edit()}><FiPlus /> Add room</button></header>
-      <section className="manage-banner"><span className="manage-banner-icon"><FiGrid /></span><div><h2>Every room, connected.</h2><p>Organize your devices by the spaces you live in.</p></div><span className="manage-total">{roomsLoaded ? rooms.length : "—"}<small>total rooms</small></span></section>
-      {(roomsError || error || devicesError) && <div className="manage-notice" role="alert">{error || roomsError || devicesError}</div>}
-      {editor && <form className="manage-editor" onSubmit={save}><div><label htmlFor="room-name">{editor === "new" ? "Create a room" : "Rename room"}</label><input id="room-name" className="manage-input" placeholder="e.g. Living room" value={name} onChange={(event) => setName(event.target.value)} required maxLength={80} disabled={saving} autoFocus /></div><button className="workspace-button" disabled={saving}>{saving ? "Saving..." : "Save room"}</button><button className="manage-icon-button" type="button" onClick={() => setEditor(null)} disabled={saving} aria-label="Cancel room edit"><FiX /></button></form>}
-      <div className="manage-toolbar"><h2>Your rooms <span>{roomsLoaded ? visible.length : "—"}</span></h2><label className="manage-search"><FiSearch /><input aria-label="Search rooms" placeholder="Search rooms..." value={search} onChange={(event) => setSearch(event.target.value)} /></label></div>
-      {!roomsLoaded ? <div className="manage-grid" role="status" aria-label="Loading rooms">{[1,2,3].map((id) => <div className="manage-skeleton" key={id}><span /><span /><span /></div>)}</div> : visible.length ? <div className="manage-grid">{visible.map((room, index) => {
-        const count = counts.get(room.id) || { total: 0, active: 0 };
-        return <article className="space-card" key={room.id}><div className="space-card-top"><span className={`space-icon tone-${index % 3}`}><FiHome /></span><div className="manage-actions"><button className="manage-icon-button" onClick={() => edit(room)} aria-label={`Rename ${room.name}`} title="Rename room"><FiEdit2 /></button><button className="manage-icon-button danger" onClick={() => remove(room)} aria-label={`Delete ${room.name}`} title="Delete room"><FiTrash2 /></button></div></div><Link className="space-name" to={roomPath(room.id)}>{room.name}</Link><p className="space-code">{room.code || "Your connected space"}</p><div className="space-metrics"><span>{devicesLoaded && !devicesError ? `${count.total} devices` : "Devices syncing..."}</span>{devicesLoaded && !devicesError && <span className={count.active ? "state-text-on" : ""}>{count.active} switched on</span>}</div><Link className="space-open" to={roomPath(room.id)}>Open room <FiArrowUpRight /></Link></article>;
-      })}</div> : !roomsError && <div className="manage-empty"><FiHome /><h2>{search ? "No matching rooms" : "Make space for smarter living"}</h2><p>{search ? "Try a different room name." : "Create your first room and start adding devices."}</p>{!search && <button className="workspace-button" onClick={() => edit()}><FiPlus /> Add your first room</button>}</div>}
+    <main className="container dashboard-page rooms-dashboard-page">
+      <header className="dashboard-heading"><div><span className="workspace-eyebrow">YOUR HOME, ROOM BY ROOM</span><h1>Rooms</h1><p>Your favorite spaces, thoughtfully connected.</p></div><button className="workspace-button" onClick={() => edit()} disabled={saving}><FiPlus /> Add room</button></header>
+      <section className="dashboard-welcome rooms-welcome"><div><span className="dashboard-welcome-label"><FiGrid /> YOUR CONNECTED SPACES</span><h2>Every room feels like home.</h2><p>A place for every device. A little more comfort<br />in every corner of your home.</p><button className="rooms-hero-action" onClick={() => edit()} disabled={saving}>Create a new space <FiArrowRight /></button></div><div className="rooms-hero-art" aria-hidden="true"><span className="rooms-hero-orbit" /><span className="rooms-hero-orbit orbit-outer" /><div className="rooms-hero-house"><FiHome /></div><span className="rooms-hero-chip"><FiGrid />{roomsLoaded ? rooms.length + (rooms.length === 1 ? " room" : " rooms") : "Your home spaces"}</span></div></section>
+      {(roomsError || (!editor && error) || devicesError) && <div className="manage-notice" role="alert">{(!editor && error) || roomsError || devicesError}</div>}
+      <section className="rooms-collection-panel" aria-labelledby="your-rooms-title"><header className="rooms-section-heading"><div><h2 id="your-rooms-title">Your rooms</h2><p>Choose a space to manage the devices inside.</p></div><span className="rooms-result-count">{roomsLoaded ? visible.length + (visible.length === 1 ? " room" : " rooms") : "Syncing rooms"}</span></header>
+        <div className="rooms-search-bar"><span><FiGrid />All spaces</span><label className="manage-search"><FiSearch /><input aria-label="Search rooms" placeholder="Search your rooms..." value={search} onChange={(event) => setSearch(event.target.value)} /></label></div>
+        {search && <div className="rooms-search-summary"><span>Showing matching rooms</span><button onClick={() => setSearch("")}><FiX />Clear search</button></div>}
+        {!roomsLoaded ? <div className="manage-grid rooms-card-grid" role="status" aria-label="Loading rooms">{[1,2,3].map((id) => <div className="manage-skeleton" key={id}><span /><span /><span /></div>)}</div> : visible.length ? <div className="manage-grid rooms-card-grid">{visible.map((room, index) => {
+          const count = counts.get(room.id) || { total:0, active:0 };
+          const counted = devicesLoaded && !devicesError;
+          return <article className="room-space-card" key={room.id}><header><span className={"room-space-icon room-tone-" + index % 3}><FiHome /></span><div className="manage-actions"><button className="manage-icon-button" onClick={() => edit(room)} disabled={saving} aria-label={"Rename " + room.name} title="Rename room"><FiEdit2 /></button><button className="manage-icon-button danger" onClick={() => remove(room)} disabled={saving} aria-label={"Delete " + room.name} title="Delete room"><FiTrash2 /></button></div></header><Link className="room-space-name" to={roomPath(room.id)}>{room.name}</Link><p className="room-space-code">{room.code || "Your connected space"}</p><div className="room-space-devices"><FiGrid /><span>{counted ? count.total + (count.total === 1 ? " device" : " devices") : "Devices syncing..."}</span></div><footer><span className={"room-power-status " + (counted && count.active ? "has-power" : "")}><i aria-hidden="true" />{counted ? count.active ? count.active + " switched on" : count.total ? "All switched off" : "Ready for devices" : "Syncing controls"}</span><Link to={roomPath(room.id)} aria-label={"Open " + room.name}><FiArrowUpRight /></Link></footer></article>;
+        })}</div> : !roomsError && <div className="manage-empty"><FiHome /><h2>{search ? "No matching rooms" : "Make space for smarter living"}</h2><p>{search ? "Try another name to find your room." : "Create your first room, then add the devices that make it yours."}</p>{search ? <button className="workspace-button" onClick={() => setSearch("")}>Clear search</button> : <button className="workspace-button" onClick={() => edit()}><FiPlus /> Add your first room</button>}</div>}
+        <footer className="rooms-panel-footer"><FiPower /><span>Open a room to add devices and manage your switches.</span></footer>
+      </section>
+      {editor && <PopupDialog title={editor === "new" ? "Create a room" : "Rename room"} description="A dedicated space for the devices you use every day." icon={<FiHome />} busy={saving} onClose={() => { setEditor(null); setError(""); }}>
+        <form className="popup-form" onSubmit={save} aria-busy={saving}>
+          <label className="popup-field" htmlFor="room-name">Room name<input id="room-name" className="manage-input" placeholder="e.g. Living room" value={name} onChange={(event) => setName(event.target.value)} required maxLength={80} disabled={saving} autoFocus /><small>Choose a name that makes this space easy to find.</small></label>
+          {error && <div className="manage-notice" role="alert">{error}</div>}
+          <footer className="popup-actions"><button className="manage-secondary" type="button" disabled={saving} onClick={() => { setEditor(null); setError(""); }}>Cancel</button><button className="workspace-button" disabled={saving || !name.trim()}><FiPlus />{saving ? "Saving room..." : editor === "new" ? "Create room" : "Save changes"}</button></footer>
+        </form>
+      </PopupDialog>}
     </main>
   );
 }
