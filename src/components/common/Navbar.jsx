@@ -1,338 +1,53 @@
-// src/components/common/Navbar.jsx
-import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
-import { useTheme } from "../../context/ThemeContext";
-import { useAuthContext } from "../../context/AuthContext";
+import { paths } from "../../routes/paths";
+import "../../manage.css";
+import { useEffect, useRef, useState } from "react";
+import { Link, NavLink, useNavigate } from "react-router-dom";
+import { FiHome, FiSun, FiMoon, FiMenu, FiUser, FiChevronDown, FiLogOut, FiArrowUpRight, FiMail, FiX } from "react-icons/fi";
 import { signOut } from "firebase/auth";
-import { auth, db } from "../../lib/firebase";
-import { doc, getDoc, setDoc, updateDoc } from "firebase/firestore";
+import { auth } from "../../lib/firebase";
+import { useTheme } from "../../hooks/useTheme";
+import { useAuthContext } from "../../hooks/useAuth";
+import { useHomeData } from "../../hooks/useHomeData";
+import { preloadPage } from "../../utils/preloadPages";
 import Sidebar from "./Sidebar";
-import LoginSidebar from "./LoginSidebar";
-import { useEffect, useMemo, useState } from "react";
-
-const CLOUD_NAME = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME;
-const UNSIGNED_PRESET = import.meta.env.VITE_CLOUDINARY_PRESET || "smart_home_preset_67";
-const CLOUDINARY_FOLDER = import.meta.env.VITE_CLOUDINARY_FOLDER || "profile_pics";
-
-const UPLOAD_URL = CLOUD_NAME
-  ? `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`
-  : null;
 
 export default function Navbar() {
+  const { user } = useAuthContext();
   const { theme, toggle } = useTheme();
-  const { user, loading } = useAuthContext();
-  const { pathname } = useLocation();
+  const { profile, profileError } = useHomeData(user.uid);
+  const [open, setOpen] = useState(false);
+  const popup = useRef(null);
+  const trigger = useRef(null);
   const navigate = useNavigate();
-
-  const isDark = theme === "dark";
-
-  // ✅ App pages where logged-in sidebar should open
-  const onApp =
-    pathname.startsWith("/dashboard") ||
-    pathname.startsWith("/room") ||
-    pathname === "/devices" ||
-    pathname === "/profile";
-
-  // ✅ Decide which offcanvas should open
-  const sideTarget = user && onApp ? "#mobileSidebar" : "#loginSidebar";
-
-  const onLogout = async () => {
-    await signOut(auth);
-    navigate("/login", { replace: true });
-  };
-
-  // -------- Profile dropdown state (desktop) ----------
-  const [profile, setProfile] = useState({ name: "", photoURL: "" });
-  const [saving, setSaving] = useState(false);
-  const [uploading, setUploading] = useState(false);
-  const [pError, setPError] = useState("");
-
-  // Fetch/create user doc
+  const name = profile?.name || user.displayName || user.email?.split("@")[0] || "Your account";
+  const photo = profile?.photoURL || user.photoURL;
+  const initials = name.trim().split(/\s+/).map((part) => part[0]).slice(0,2).join("").toUpperCase();
+  const logout = async () => { try { await signOut(auth); navigate(paths.login, { replace:true }); } catch { window.alert("Unable to sign out. Please try again."); } };
   useEffect(() => {
-    let mounted = true;
-
-    (async () => {
-      try {
-        if (!user) return;
-
-        const ref = doc(db, "users", user.uid);
-        const snap = await getDoc(ref);
-        if (!mounted) return;
-
-        if (snap.exists()) {
-          const data = snap.data();
-          setProfile({
-            name: data?.name || user.email?.split("@")[0] || "",
-            photoURL: data?.photoURL || "",
-          });
-        } else {
-          await setDoc(ref, {
-            email: user.email,
-            name: user.email?.split("@")[0] || "",
-            photoURL: "",
-            createdAt: Date.now(),
-          });
-
-          setProfile({
-            name: user.email?.split("@")[0] || "",
-            photoURL: "",
-          });
-        }
-      } catch (e) {
-        console.error(e);
-      }
-    })();
-
-    return () => {
-      mounted = false;
-    };
-  }, [user]);
-
-  const initials = useMemo(() => {
-    if (!profile?.name) return "U";
-    return profile.name
-      .trim()
-      .split(" ")
-      .map((p) => p[0]?.toUpperCase())
-      .slice(0, 2)
-      .join("");
-  }, [profile?.name]);
-
-  const uploadAvatar = async (file) => {
-    if (!file) return;
-
-    if (!UPLOAD_URL) {
-      setPError("Cloudinary config missing. Add VITE_CLOUDINARY_CLOUD_NAME in .env.");
-      return;
-    }
-
-    setPError("");
-    setUploading(true);
-
-    try {
-      const form = new FormData();
-      form.append("file", file);
-      form.append("upload_preset", UNSIGNED_PRESET);
-      form.append("folder", CLOUDINARY_FOLDER);
-
-      const res = await fetch(UPLOAD_URL, { method: "POST", body: form });
-      const json = await res.json();
-
-      if (json?.secure_url) {
-        setProfile((p) => ({ ...p, photoURL: json.secure_url }));
-      } else {
-        throw new Error(json?.error?.message || "Upload failed");
-      }
-    } catch (e) {
-      setPError(e?.message || "Upload failed");
-    } finally {
-      setUploading(false);
-    }
-  };
-
-  const saveProfile = async () => {
-    if (!user) return;
-
-    setSaving(true);
-    setPError("");
-
-    try {
-      const ref = doc(db, "users", user.uid);
-      await updateDoc(ref, {
-        name: profile.name || "",
-        photoURL: profile.photoURL || "",
-        updatedAt: Date.now(),
-      });
-    } catch (e) {
-      console.error(e);
-      setPError("Failed to save profile.");
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  return (
-    <>
-      <nav
-        className={`navbar shadow-sm nav-3d sticky-top ${
-          isDark ? "navbar-dark" : "navbar-light"
-        }`}
-      >
-        <div className="container d-flex align-items-center">
-          {/* Brand */}
-          <Link
-            className="navbar-brand d-flex align-items-center gap-2"
-            to={user ? "/dashboard" : "/login"}
-          >
-            <span className="brand-icon d-inline-grid place-items-center">
-              <i className="fa-solid fa-house"></i>
-            </span>
-            <span className="fw-bold">Nova Control</span>
-          </Link>
-
-          {/* Center links only when auth loaded & logged-in */}
-          {!loading && user && (
-            <ul className="dash-nav d-none d-lg-flex list-unstyled m-0 p-0 mx-auto">
-              <li className="nav-item">
-                <NavLink
-                  to="/dashboard"
-                  className={({ isActive }) =>
-                    "nav-link dash-link" + (isActive ? " active" : "")
-                  }
-                >
-                  Dashboard
-                </NavLink>
-              </li>
-
-              <li className="nav-item">
-                <NavLink
-                  to="/room"
-                  className={({ isActive }) =>
-                    "nav-link dash-link" + (isActive ? " active" : "")
-                  }
-                >
-                  Rooms
-                </NavLink>
-              </li>
-
-              <li className="nav-item">
-                <NavLink
-                  to="/devices"
-                  className={({ isActive }) =>
-                    "nav-link dash-link" + (isActive ? " active" : "")
-                  }
-                >
-                  Devices
-                </NavLink>
-              </li>
-
-              {/* Desktop PROFILE DROPDOWN CARD */}
-              <li className="nav-item dropdown d-none d-lg-block">
-                <button
-                  className="nav-link dash-link dropdown-toggle bg-transparent border-0"
-                  id="profileMenuBtn"
-                  data-bs-toggle="dropdown"
-                  aria-expanded="false"
-                >
-                  Profile
-                </button>
-
-                <div
-                  className="dropdown-menu dropdown-menu-end p-3 border-0 shadow-lg profile-card-dropdown"
-                  aria-labelledby="profileMenuBtn"
-                >
-                  {/* Top: avatar + name + email */}
-                  <div className="d-flex align-items-center gap-3">
-                    {profile.photoURL ? (
-                      <img
-                        src={profile.photoURL}
-                        alt="avatar"
-                        className="rounded-circle object-fit-cover"
-                        width="56"
-                        height="56"
-                      />
-                    ) : (
-                      <div
-                        className="rounded-circle bg-secondary-subtle d-flex align-items-center justify-content-center"
-                        style={{ width: 56, height: 56, fontWeight: 700 }}
-                      >
-                        {initials}
-                      </div>
-                    )}
-
-                    <div className="flex-grow-1">
-                      <div className="fw-semibold">{profile.name || "User"}</div>
-                      <div className="text-muted small">{user?.email}</div>
-                    </div>
-                  </div>
-
-                  <hr className="my-3" />
-
-                  {/* Name input */}
-                  <div className="mb-2">
-                    <label className="form-label small text-muted mb-1">Name</label>
-                    <input
-                      className="form-control"
-                      value={profile.name}
-                      onChange={(e) =>
-                        setProfile((p) => ({ ...p, name: e.target.value }))
-                      }
-                      placeholder="Your name"
-                    />
-                  </div>
-
-                  {/* Photo upload */}
-                  <div className="mb-2">
-                    <label className="form-label small text-muted mb-1">Photo</label>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      className="form-control"
-                      onChange={(e) => uploadAvatar(e.target.files?.[0])}
-                      disabled={uploading}
-                    />
-                    {uploading && (
-                      <div className="small text-muted mt-1">Uploading…</div>
-                    )}
-                  </div>
-
-                  {pError && (
-                    <div className="alert alert-danger py-2 small mb-2">
-                      {pError}
-                    </div>
-                  )}
-
-                  {/* ✅ Only Save button (Full Profile removed) */}
-                  <button
-                    className="btn btn-primary w-100"
-                    onClick={saveProfile}
-                    disabled={saving}
-                  >
-                    {saving ? "Saving…" : "Save"}
-                  </button>
-                </div>
-              </li>
-            </ul>
-          )}
-
-          <div className="d-flex align-items-center gap-2 ms-auto">
-            {/* Theme toggle (md+) */}
-            <button
-              className="btn btn-outline-secondary d-none d-md-inline-flex align-items-center justify-content-center"
-              style={{ width: "40px", height: "40px", padding: 0 }}
-              onClick={toggle}
-              aria-label={isDark ? "Switch to light" : "Switch to dark"}
-              title={isDark ? "Light" : "Dark"}
-            >
-              <i className={isDark ? "fa-solid fa-sun" : "fa-solid fa-moon"} />
-            </button>
-
-            {/* Mobile hamburger */}
-            <button
-              className="btn btn-outline-secondary d-lg-none align-items-center justify-content-center"
-              style={{ width: "40px", height: "40px", padding: 0 }}
-              data-bs-toggle="offcanvas"
-              data-bs-target={sideTarget}
-              aria-controls={sideTarget.replace("#", "")}
-              aria-label="Open menu"
-            >
-              <i className="fa-solid fa-bars"></i>
-            </button>
-
-            {/* Logout (desktop) */}
-            {!loading && user && (
-              <button
-                className="btn btn-outline-danger d-none d-lg-inline-flex"
-                onClick={onLogout}
-              >
-                Logout
-              </button>
-            )}
-          </div>
+    const timer = setTimeout(() => preloadPage(paths.rooms), 200);
+    return () => clearTimeout(timer);
+  }, []);
+  useEffect(() => {
+    if (!open) return;
+    const outside = (event) => { if (!popup.current?.contains(event.target) && !trigger.current?.contains(event.target)) setOpen(false); };
+    const escape = (event) => { if (event.key === "Escape") { setOpen(false); trigger.current?.focus(); } };
+    document.addEventListener("pointerdown", outside);
+    document.addEventListener("keydown", escape);
+    return () => { document.removeEventListener("pointerdown", outside); document.removeEventListener("keydown", escape); };
+  }, [open]);
+  return <>
+    <nav className="navbar nav-3d sticky-top" aria-label="Main navigation"><div className="container">
+      <Link className="navbar-brand d-flex align-items-center gap-2" to={paths.dashboard}><span className="brand-icon"><FiHome /></span><span className="fw-bold">Nova Control</span></Link>
+      <div className="main-nav-links d-none d-lg-flex">{[[paths.dashboard,"Dashboard"],[paths.rooms,"Rooms"],[paths.devices,"Devices"]].map(([path,label]) => <NavLink key={path} to={path} end={path === paths.dashboard} onPointerEnter={() => preloadPage(path)} onFocus={() => preloadPage(path)}>{label}</NavLink>)}</div>
+      <div className="account-nav ms-auto">
+        <button className="manage-icon-button theme-button" onClick={toggle} aria-label={theme === "dark" ? "Switch to light theme" : "Switch to dark theme"}>{theme === "dark" ? <FiSun /> : <FiMoon />}</button>
+        <div className="account-menu" onBlur={(event) => { if (event.relatedTarget && !event.currentTarget.contains(event.relatedTarget)) setOpen(false); }}>
+          <button ref={trigger} className="account-trigger" aria-expanded={open} aria-haspopup="dialog" aria-controls="account-popover" onClick={() => setOpen((value) => !value)} onPointerEnter={() => preloadPage(paths.profile)} onFocus={() => preloadPage(paths.profile)}><span className="account-avatar">{photo ? <img src={photo} alt="" width="34" height="34" /> : initials}</span><span className="account-trigger-label">Profile</span><FiChevronDown /></button>
+          {open && <section ref={popup} id="account-popover" className="account-popover" role="dialog" aria-label="Your profile"><header><span>Your account</span><button className="manage-icon-button" aria-label="Close profile card" onClick={() => { setOpen(false); trigger.current?.focus(); }}><FiX /></button></header><div className="account-identity"><span className="account-avatar account-avatar-large">{photo ? <img src={photo} alt="" width="64" height="64" /> : initials}</span><h2>{name}</h2><p><FiMail />{user.email}</p></div>{profileError && <p className="control-error" role="alert">{profileError}</p>}<div className="account-detail"><FiUser /><span>Personal workspace</span><span className="account-badge">Member</span></div><Link className="workspace-button" to={paths.profile} onClick={() => setOpen(false)}>View & edit profile <FiArrowUpRight /></Link><button className="account-signout" onClick={logout}><FiLogOut /> Sign out</button></section>}
         </div>
-      </nav>
-
-      {/* Sidebars */}
-      {user ? <Sidebar /> : <LoginSidebar />}
-    </>
-  );
+        <button className="manage-icon-button d-lg-none" data-bs-toggle="offcanvas" data-bs-target="#mobileSidebar" aria-controls="mobileSidebar" aria-label="Open navigation"><FiMenu /></button>
+      </div>
+    </div></nav>
+    <Sidebar profile={{name, photoURL:photo}} />
+  </>;
 }

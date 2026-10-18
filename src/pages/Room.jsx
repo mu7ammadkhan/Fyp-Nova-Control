@@ -1,275 +1,54 @@
-// src/pages/Room.jsx
-import { useEffect, useState } from "react";
-import { useAuthContext } from "../context/AuthContext";
-import { addRoom, getRooms, renameRoom, removeRoom } from "../services/rooms";
-import { countDevicesInRoom } from "../services/devices";
-import { useNavigate } from "react-router-dom";
-import { motion, AnimatePresence } from "framer-motion";
-import { FaDoorOpen, FaEllipsisV, FaPlus, FaSave, FaTimes } from "react-icons/fa";
+import { roomPath } from "../routes/paths";
+import "../manage.css";
+import { useState } from "react";
+import { Link } from "react-router-dom";
+import { FiHome, FiPlus, FiSearch, FiEdit2, FiTrash2, FiArrowUpRight, FiX, FiGrid } from "react-icons/fi";
+import { useAuthContext } from "../hooks/useAuth";
+import { useHomeData } from "../hooks/useHomeData";
+import { addRoom, renameRoom, removeRoom } from "../services/rooms";
 
 export default function RoomsPage() {
   const { user } = useAuthContext();
-  const uid = user?.uid;
-  const navigate = useNavigate();
-
-  const [rooms, setRooms] = useState([]);
-  const [loading, setLoading] = useState(true);
-
-  const [showAdd, setShowAdd] = useState(false);
-  const [newName, setNewName] = useState("");
+  const { rooms, devices, roomsLoaded, devicesLoaded, roomsError, devicesError } = useHomeData(user.uid);
+  const [search, setSearch] = useState("");
+  const [editor, setEditor] = useState(null);
+  const [name, setName] = useState("");
   const [saving, setSaving] = useState(false);
-  const [addErr, setAddErr] = useState("");
-
-  // ✅ Track which dropdown is currently open (for z-index fix)
-  const [openMenuId, setOpenMenuId] = useState(null);
-
-  // ✅ Listen to Bootstrap dropdown events globally (works even with framer-motion/backdrop-filter)
-  useEffect(() => {
-    const onShown = (e) => {
-      const btn = e?.target;
-      const item = btn?.closest?.("[data-room-id]");
-      if (item) setOpenMenuId(item.getAttribute("data-room-id"));
-    };
-
-    const onHidden = () => setOpenMenuId(null);
-
-    document.addEventListener("shown.bs.dropdown", onShown);
-    document.addEventListener("hidden.bs.dropdown", onHidden);
-
-    return () => {
-      document.removeEventListener("shown.bs.dropdown", onShown);
-      document.removeEventListener("hidden.bs.dropdown", onHidden);
-    };
-  }, []);
-
-  // Fetch rooms with device counts
-  useEffect(() => {
-    if (!uid) return;
-
-    (async () => {
-      setLoading(true);
-      try {
-        const list = await getRooms(uid);
-
-        const withCounts = await Promise.all(
-          list.map(async (r) => ({
-            ...r,
-            deviceCount: await countDevicesInRoom(uid, r.id),
-          }))
-        );
-
-        setRooms(withCounts);
-      } catch (e) {
-        console.error("Failed to fetch rooms:", e);
-      } finally {
-        setLoading(false);
-      }
-    })();
-  }, [uid]);
-
-  // Add new room
-  const handleAdd = async () => {
-    setAddErr("");
-    const name = newName.trim();
-    if (!name) return setAddErr("Please enter a room name.");
-
-    setSaving(true);
+  const [error, setError] = useState("");
+  const visible = rooms.filter((room) => room.name.toLowerCase().includes(search.toLowerCase()));
+  const counts = new Map();
+  devices.forEach((device) => {
+    const count = counts.get(device.roomId) || { total: 0, active: 0 };
+    count.total++; if (device.state) count.active++;
+    counts.set(device.roomId, count);
+  });
+  const edit = (room = {}) => { setEditor(room.id || "new"); setName(room.name || ""); setError(""); };
+  const save = async (event) => {
+    event.preventDefault(); setSaving(true); setError("");
     try {
-      const created = await addRoom(uid, name);
-      setRooms((cur) => [{ ...created, deviceCount: 0 }, ...cur]);
-      setNewName("");
-      setShowAdd(false);
-    } catch (e) {
-      if (e?.code === "name_exists") setAddErr("This name already exists.");
-      else setAddErr(e?.message || "Failed to add room.");
-    } finally {
-      setSaving(false);
-    }
+      if (editor === "new") await addRoom(user.uid, name);
+      else await renameRoom(user.uid, editor, name);
+      setEditor(null); setName("");
+    } catch (err) { setError(err.code === "name_exists" ? "A room with this name already exists." : "Unable to save the room. Please try again."); }
+    finally { setSaving(false); }
   };
-
-  // Rename room
-  const handleRename = async (id, name) => {
-    try {
-      await renameRoom(uid, id, name);
-      setRooms((cur) => cur.map((r) => (r.id === id ? { ...r, name } : r)));
-    } catch (e) {
-      if (e?.code === "name_exists") alert("This name already exists.");
-      else alert(e?.message || "Failed to rename room.");
-    }
+  const remove = async (room) => {
+    if (!window.confirm(`Delete ${room.name}? Its devices will remain in All Devices.`)) return;
+    setError("");
+    try { await removeRoom(user.uid, room.id); }
+    catch { setError("Unable to delete this room. Please try again."); }
   };
-
-  // Delete room
-  const handleDelete = async (id) => {
-    if (!window.confirm("Delete this room?")) return;
-    try {
-      await removeRoom(uid, id);
-      setRooms((cur) => cur.filter((r) => r.id !== id));
-    } catch (e) {
-      alert(e?.message || "Failed to delete room.");
-    }
-  };
-
   return (
-    <div className="container py-4 page-fade">
-      <div className="d-flex justify-content-between align-items-start mb-3">
-        <div>
-          <h3 className="mb-1">Rooms</h3>
-          <p className="text-muted mb-0">Create rooms and map devices via unique ID.</p>
-        </div>
-
-        <motion.button
-          className="btn btn-primary rounded-pill d-flex align-items-center gap-2"
-          onClick={() => setShowAdd((s) => !s)}
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          type="button"
-        >
-          <FaPlus /> Add Room
-        </motion.button>
-      </div>
-
-      <AnimatePresence>
-        {showAdd && (
-          <motion.div
-            className="glass-panel p-3 mb-3"
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            transition={{ type: "spring", stiffness: 300, damping: 25 }}
-          >
-            <label className="form-label small text-muted mb-1">Room name</label>
-            <input
-              type="text"
-              className="form-control input-underline"
-              placeholder="e.g., Living Room"
-              value={newName}
-              onChange={(e) => setNewName(e.target.value)}
-            />
-            <div className="small text-muted mt-1">
-              A unique <strong>Room ID</strong> will be generated automatically.
-            </div>
-
-            {addErr && (
-              <div className="alert alert-warning py-2 px-3 mt-2 mb-0">{addErr}</div>
-            )}
-
-            <div className="mt-3 d-flex gap-2">
-              <motion.button
-                className="btn roomd-primary d-flex align-items-center gap-1"
-                onClick={handleAdd}
-                disabled={saving}
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                type="button"
-              >
-                {saving ? (
-                  "Saving..."
-                ) : (
-                  <>
-                    <FaSave /> Save
-                  </>
-                )}
-              </motion.button>
-
-              <motion.button
-                className="btn btn-outline-secondary d-flex align-items-center gap-1"
-                onClick={() => setShowAdd(false)}
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                type="button"
-              >
-                <FaTimes /> Cancel
-              </motion.button>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {loading ? (
-        <div className="text-muted">Loading…</div>
-      ) : rooms.length === 0 ? (
-        <div className="text-muted">No rooms yet. Add one above.</div>
-      ) : (
-        <div className="row g-3">
-          {rooms.map((r) => (
-            <motion.div
-              key={r.id}
-              data-room-id={r.id}
-              className={`col-12 col-md-6 col-lg-4 room-grid-item ${
-                openMenuId === r.id ? "room-grid-item--open" : ""
-              }`}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 20 }}
-              transition={{ type: "spring", stiffness: 300, damping: 25 }}
-            >
-              <div
-                className="room-tile"
-                role="button"
-                tabIndex={0}
-                onClick={() => navigate(`/room/${r.id}`)}
-                onKeyDown={(e) => e.key === "Enter" && navigate(`/room/${r.id}`)}
-              >
-                <div className="room-tile-left d-flex align-items-center gap-3">
-                  <div className="room-tile-icon">
-                    <FaDoorOpen size={24} />
-                  </div>
-
-                  <div className="room-tile-text">
-                    <div className="room-tile-name">{r.name}</div>
-                    <div className="room-tile-sub text-muted d-flex flex-wrap gap-2">
-                      <span className="room-chip">{r.deviceCount} devices</span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* actions */}
-                <div className="dropdown">
-                  <motion.button
-                    className="btn btn-sm room-kebab"
-                    data-bs-toggle="dropdown"
-                    data-bs-display="static"
-                    data-bs-boundary="window"
-                    onClick={(e) => e.stopPropagation()}
-                    whileHover={{ scale: 1.1 }}
-                    whileTap={{ scale: 0.95 }}
-                    type="button"
-                  >
-                    <FaEllipsisV />
-                  </motion.button>
-
-                  <ul
-                    className="dropdown-menu dropdown-menu-end"
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    <li>
-                      <button
-                        className="dropdown-item"
-                        type="button"
-                        onClick={() => {
-                          const name = prompt("Enter new name:", r.name);
-                          if (name) handleRename(r.id, name);
-                        }}
-                      >
-                        Rename
-                      </button>
-                    </li>
-                    <li>
-                      <button
-                        className="dropdown-item text-danger"
-                        type="button"
-                        onClick={() => handleDelete(r.id)}
-                      >
-                        Delete
-                      </button>
-                    </li>
-                  </ul>
-                </div>
-              </div>
-            </motion.div>
-          ))}
-        </div>
-      )}
-    </div>
+    <main className="container manage-page">
+      <header className="manage-heading"><div><span className="workspace-eyebrow">YOUR SPACES</span><h1>Rooms</h1><p>A place for every part of your home.</p></div><button className="workspace-button" onClick={() => edit()}><FiPlus /> Add room</button></header>
+      <section className="manage-banner"><span className="manage-banner-icon"><FiGrid /></span><div><h2>Every room, connected.</h2><p>Organize your devices by the spaces you live in.</p></div><span className="manage-total">{roomsLoaded ? rooms.length : "—"}<small>total rooms</small></span></section>
+      {(roomsError || error || devicesError) && <div className="manage-notice" role="alert">{error || roomsError || devicesError}</div>}
+      {editor && <form className="manage-editor" onSubmit={save}><div><label htmlFor="room-name">{editor === "new" ? "Create a room" : "Rename room"}</label><input id="room-name" className="manage-input" placeholder="e.g. Living room" value={name} onChange={(event) => setName(event.target.value)} required maxLength={80} disabled={saving} autoFocus /></div><button className="workspace-button" disabled={saving}>{saving ? "Saving..." : "Save room"}</button><button className="manage-icon-button" type="button" onClick={() => setEditor(null)} disabled={saving} aria-label="Cancel room edit"><FiX /></button></form>}
+      <div className="manage-toolbar"><h2>Your rooms <span>{roomsLoaded ? visible.length : "—"}</span></h2><label className="manage-search"><FiSearch /><input aria-label="Search rooms" placeholder="Search rooms..." value={search} onChange={(event) => setSearch(event.target.value)} /></label></div>
+      {!roomsLoaded ? <div className="manage-grid" role="status" aria-label="Loading rooms">{[1,2,3].map((id) => <div className="manage-skeleton" key={id}><span /><span /><span /></div>)}</div> : visible.length ? <div className="manage-grid">{visible.map((room, index) => {
+        const count = counts.get(room.id) || { total: 0, active: 0 };
+        return <article className="space-card" key={room.id}><div className="space-card-top"><span className={`space-icon tone-${index % 3}`}><FiHome /></span><div className="manage-actions"><button className="manage-icon-button" onClick={() => edit(room)} aria-label={`Rename ${room.name}`} title="Rename room"><FiEdit2 /></button><button className="manage-icon-button danger" onClick={() => remove(room)} aria-label={`Delete ${room.name}`} title="Delete room"><FiTrash2 /></button></div></div><Link className="space-name" to={roomPath(room.id)}>{room.name}</Link><p className="space-code">{room.code || "Your connected space"}</p><div className="space-metrics"><span>{devicesLoaded && !devicesError ? `${count.total} devices` : "Devices syncing..."}</span>{devicesLoaded && !devicesError && <span className={count.active ? "state-text-on" : ""}>{count.active} switched on</span>}</div><Link className="space-open" to={roomPath(room.id)}>Open room <FiArrowUpRight /></Link></article>;
+      })}</div> : !roomsError && <div className="manage-empty"><FiHome /><h2>{search ? "No matching rooms" : "Make space for smarter living"}</h2><p>{search ? "Try a different room name." : "Create your first room and start adding devices."}</p>{!search && <button className="workspace-button" onClick={() => edit()}><FiPlus /> Add your first room</button>}</div>}
+    </main>
   );
 }

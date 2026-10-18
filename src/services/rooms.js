@@ -5,12 +5,16 @@ import {
   updateDoc,
   deleteDoc,
   getDocs,
+  getDoc,
   query,
   where,
   orderBy,
   serverTimestamp
 } from "firebase/firestore";
-import { db } from "../lib/firebase";
+import { db } from "../lib/database";
+import { createRequestCache } from "../utils/requestCache";
+
+const roomRequests = createRequestCache();
 
 const roomsCol = (uid) => collection(db, "users", uid, "rooms");
 const roomDoc  = (uid, id) => doc(db, "users", uid, "rooms", id);
@@ -67,13 +71,21 @@ export async function addRoom(uid, name) {
     createdAt: now,
     updatedAt: now,
   });
+  roomRequests.invalidate(uid);
   return { id: ref.id, name: clean, code, createdAt: new Date(), updatedAt: new Date() };
 }
 
 /* LIST */
 export async function getRooms(uid) {
-  const snap = await getDocs(query(roomsCol(uid), orderBy("createdAt", "desc")));
-  return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  return roomRequests.get(uid, async () => {
+    const snap = await getDocs(query(roomsCol(uid), orderBy("createdAt", "desc")));
+    return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  });
+}
+
+export async function getRoom(uid, id) {
+  const snap = await getDoc(roomDoc(uid, id));
+  return snap.exists() ? { id: snap.id, ...snap.data() } : null;
 }
 
 /* RENAME */
@@ -88,11 +100,13 @@ export async function renameRoom(uid, id, newName) {
     nameLower: clean.toLowerCase(),
     updatedAt: serverTimestamp(),
   });
+  roomRequests.invalidate(uid);
 }
 
 /* DELETE */
 export async function removeRoom(uid, id) {
   await deleteDoc(roomDoc(uid, id));
+  roomRequests.invalidate(uid);
 }
 
 /* (Optional) One-time helper to backfill nameLower on legacy docs */

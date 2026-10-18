@@ -14,14 +14,34 @@ import {
   getCountFromServer,
 } from "firebase/firestore";
 
-import { ref, set } from "firebase/database";
-import { db, rtdb } from "../lib/firebase";
+import { db } from "../lib/database";
+import { app } from "../lib/firebase";
+import { syncDeviceCommand } from "../utils/deviceCommands";
 
 const devicesCol = (uid) => collection(db, "users", uid, "devices");
 const deviceDoc = (uid, id) => doc(db, "users", uid, "devices", id);
 
 // ✅ RTDB path for live state (ESP32 will listen here)
-const stateRef = (uid, id) => ref(rtdb, `states/${uid}/${id}`);
+// Load the hardware SDK only when a device is created or switched.
+let realtimeSdk;
+function loadRealtimeSdk() {
+  if (!realtimeSdk) realtimeSdk = import("firebase/database").catch((error) => {
+    realtimeSdk = undefined;
+    throw error;
+  });
+  return realtimeSdk;
+}
+
+export async function warmDeviceConnection() {
+  const { getDatabase, ref, onValue } = await loadRealtimeSdk();
+  // Establish the Firebase connection before the first power-button click.
+  return onValue(ref(getDatabase(app), ".info/connected"), () => {});
+}
+
+async function writeDeviceState(uid, id, value) {
+  const { getDatabase, ref, set } = await loadRealtimeSdk();
+  return set(ref(getDatabase(app), `states/${uid}/${id}`), value);
+}
 
 function makeCode(len = 6, prefix = "DV-") {
   const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
@@ -51,7 +71,7 @@ export async function addDevice(uid, { name, type = "Light", roomId, roomName = 
 
   // Optional: create initial RTDB node (not required, but useful)
   try {
-    await set(stateRef(uid, refDoc.id), {
+    await writeDeviceState(uid, refDoc.id, {
       state: false,
       updatedAt: Date.now(),
     });
@@ -90,9 +110,9 @@ export function onDevicesByRoom(uid, roomId, cb) {
   return onSnapshot(q, (snap) => cb(snap.docs.map((d) => ({ id: d.id, ...d.data() }))));
 }
 
-export function onAllDevices(uid, cb) {
+export function onAllDevices(uid, cb, onError) {
   const q = query(devicesCol(uid), orderBy("createdAt", "desc"));
-  return onSnapshot(q, (snap) => cb(snap.docs.map((d) => ({ id: d.id, ...d.data() }))));
+  return onSnapshot(q, (snap) => cb(snap.docs.map((d) => ({ id: d.id, ...d.data() }))), onError);
 }
 
 /** COUNTS */
@@ -110,14 +130,11 @@ export async function countDevicesInRoom(uid, roomId) {
 
 /** MUTATIONS */
 export async function setDeviceState(uid, id, state) {
-  // 1) Firestore update (UI/history)
-  await updateDoc(deviceDoc(uid, id), { state, updatedAt: serverTimestamp() });
-
-  // 2) RTDB update (ESP32 live)
-  await set(stateRef(uid, id), {
-    state: !!state,
-    updatedAt: Date.now(),
-  });
+  const next = !!state;
+  return syncDeviceCommand(
+    () => writeDeviceState(uid, id, { state: next, updatedAt: Date.now() }),
+    () => updateDoc(deviceDoc(uid, id), { state: next, updatedAt: serverTimestamp() }),
+  );
 }
 
 export async function renameDevice(uid, id, name) {

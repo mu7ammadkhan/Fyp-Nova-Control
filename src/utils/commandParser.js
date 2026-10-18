@@ -1,54 +1,14 @@
 import { setDeviceState } from "../services/devices";
+import { resolveCommand } from "./commandMatcher";
 
-export function parseCommand(text, devices, uid) {
-  const cmd = text.toLowerCase();
-
-  // Detect action
-  let action = null;
-  if (cmd.includes("on") || cmd.includes("khol") || cmd.includes("kholo")) {
-    action = true;
+export async function parseCommand(text, devices, uid) {
+  if (!uid) throw new Error("Please sign in to control your devices.");
+  const { targets, state } = resolveCommand(text, devices);
+  const results = await Promise.allSettled(targets.map((device) => setDeviceState(uid, device.id, state)));
+  const failed = results.filter((result) => result.status === "rejected");
+  if (failed.length) {
+    const prefix = targets.length > 1 ? `${results.length - failed.length} of ${results.length} commands synced. ` : "";
+    throw new Error(prefix + (failed[0].reason?.message || "Unable to sync the command. Please try again."));
   }
-  if (cmd.includes("off") || cmd.includes("band")) {
-    action = false;
-  }
-
-  if (action === null) {
-    alert("Could not understand ON / OFF");
-    return;
-  }
-
-  // 🔥 1️⃣ Specific device name match first
-  const exactMatch = devices.find((d) =>
-    cmd.includes(d.name.toLowerCase())
-  );
-
-  if (exactMatch) {
-    setDeviceState(uid, exactMatch.id, action);
-    return;
-  }
-
-  // 🔥 2️⃣ Type match (Light, Fan, etc.)
-  const typeMatches = devices.filter((d) =>
-    cmd.includes(d.type.toLowerCase())
-  );
-
-  if (typeMatches.length === 1) {
-    setDeviceState(uid, typeMatches[0].id, action);
-    return;
-  }
-
-  if (typeMatches.length > 1) {
-    // If user said "all lights"
-    if (cmd.includes("all")) {
-      typeMatches.forEach((d) =>
-        setDeviceState(uid, d.id, action)
-      );
-      return;
-    }
-
-    alert("Multiple devices found. Please specify name.");
-    return;
-  }
-
-  alert("Device not found");
+  return `Saved the ${state ? "ON" : "OFF"} command for ${targets.length === 1 ? targets[0].name : `${targets.length} devices`}.`;
 }

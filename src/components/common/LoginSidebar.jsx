@@ -1,6 +1,7 @@
+import Icon from "./Icon";
 // src/components/common/LoginSidebar.jsx
 import { NavLink } from "react-router-dom";
-import { useTheme } from "../../context/ThemeContext";
+import { useTheme } from "../../hooks/useTheme";
 
 export default function LoginSidebar() {
   const { theme, toggle } = useTheme();
@@ -13,7 +14,7 @@ export default function LoginSidebar() {
       oc.hide();
     }
     // focus blur to avoid weird mobile focus issues
-    try { document.activeElement?.blur(); } catch {}
+    try { document.activeElement?.blur(); } catch { /* Optional UI cleanup may fail if the element is already gone. */ }
   };
 
   return (
@@ -26,7 +27,7 @@ export default function LoginSidebar() {
       <div className="offcanvas-header pb-2">
         <div className="d-flex align-items-center gap-2">
           <span className="brand-icon d-inline-grid place-items-center">
-            <i className="fa-solid fa-house" />
+            <Icon className="fa-solid fa-house" />
           </span>
           <h6 className="offcanvas-title m-0 fw-bold" id="loginSidebarLabel">
             Nova Control
@@ -49,7 +50,7 @@ export default function LoginSidebar() {
               className="nav-link nc-link d-flex align-items-center gap-2"
               onClick={closeOffcanvas}
             >
-              <i className="fa-solid fa-shield-halved me-2" />
+              <Icon className="fa-solid fa-shield-halved me-2" />
               <span>Admin Panel</span>
             </NavLink>
           </li>
@@ -58,7 +59,7 @@ export default function LoginSidebar() {
         <div className="mt-auto pt-2">
           <div className="d-flex align-items-center justify-content-between px-2 mb-2 nc-anim">
             <div className="d-flex align-items-center gap-2">
-              <i className="fa-regular fa-moon" />
+              <Icon className="fa-regular fa-moon" />
               <span>Dark Mode</span>
             </div>
             <div className="form-check form-switch m-0">

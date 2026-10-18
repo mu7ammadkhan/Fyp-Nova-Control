@@ -1,60 +1,47 @@
-// FILE: src/App.jsx
-import { Routes, Route, Navigate } from "react-router-dom";
-import Navbar from "./components/common/Navbar";
-
-// Auth (user)
-import Login from "./pages/Login";
-import Dashboard from "./pages/Dashboard";
-
-// Guards
+import { lazy } from "react";
+import { useRoutes } from "react-router-dom";
+import RootLayout from "./layouts/RootLayout";
+import RoomsLayout from "./layouts/RoomsLayout";
 import ProtectedRoute from "./routes/ProtectedRoute";
+import GuestRoute from "./routes/GuestRoute";
+import { HomeRedirect, LegacyRedirect } from "./routes/Redirects";
+import { routeTree } from "./routes/routeTree";
+import { paths } from "./routes/paths";
+import { pageLoaders } from "./utils/preloadPages";
+import Login from "./pages/Login";
+import NotFound from "./pages/NotFound";
 
-// Rooms & Devices
-import RoomsPage from "./pages/Room";
-import RoomDevices from "./pages/RoomDevices";
-import DevicesPage from "./pages/Devices";
+const AppLayout = lazy(() => import("./layouts/AppLayout"));
+const Dashboard = lazy(pageLoaders[paths.dashboard]);
+const Rooms = lazy(pageLoaders[paths.rooms]);
+const RoomDevices = lazy(pageLoaders.roomDevices);
+const Devices = lazy(pageLoaders[paths.devices]);
+const Profile = lazy(pageLoaders[paths.profile]);
 
-import { useAuthContext } from "./context/AuthContext";
+const elements = {
+  root: <RootLayout />,
+  home: <HomeRedirect />,
+  guest: <GuestRoute />,
+  login: <Login />,
+  protected: <ProtectedRoute />,
+  workspace: <AppLayout />,
+  dashboard: <Dashboard />,
+  "rooms-layout": <RoomsLayout />,
+  rooms: <Rooms />,
+  "room-devices": <RoomDevices />,
+  devices: <Devices />,
+  profile: <Profile />,
+  "workspace-not-found": <NotFound />,
+  "not-found": <NotFound />,
+};
 
-export default function App() {
-  const { user } = useAuthContext();
-
-  return (
-    <>
-      <Navbar />
-
-      <Routes>
-        {/* Default → /login */}
-        <Route path="/" element={<Navigate to="/login" replace />} />
-
-        {/* Login: if already logged-in, send to dashboard */}
-        <Route
-          path="/login"
-          element={user ? <Navigate to="/dashboard" replace /> : <Login />}
-        />
-
-        {/* ===== User area (protected) ===== */}
-        <Route element={<ProtectedRoute />}>
-          <Route path="/dashboard" element={<Dashboard />} />
-
-          {/* Rooms list */}
-          <Route path="/room" element={<RoomsPage />} />
-          {/* Backward-compat for your current link: /dashboard/rooms → /room */}
-          <Route
-            path="/dashboard/rooms"
-            element={<Navigate to="/room" replace />}
-          />
-
-          {/* Single room → devices inside that room */}
-          <Route path="/room/:roomId" element={<RoomDevices />} />
-
-          {/* Global devices page */}
-          <Route path="/devices" element={<DevicesPage />} />
-        </Route>
-
-        {/* Fallback */}
-        <Route path="*" element={<Navigate to="/login" replace />} />
-      </Routes>
-    </>
-  );
+function buildRoutes(nodes) {
+  return nodes.map((node) => ({
+    ...node,
+    element: node.id.startsWith("legacy-") ? <LegacyRedirect /> : elements[node.id],
+    ...(node.children ? { children: buildRoutes(node.children) } : {}),
+  }));
 }
+const routes = buildRoutes(routeTree);
+
+export default function App() { return useRoutes(routes); }

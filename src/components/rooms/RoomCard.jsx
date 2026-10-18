@@ -1,3 +1,5 @@
+import { roomPath } from "../../routes/paths";
+import Icon from "../common/Icon";
 // FILE: src/components/rooms/RoomCard.jsx
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
@@ -16,7 +18,7 @@ export default function RoomCard({ uid, room, onRename, onDelete }) {
       try {
         const c = await countDevicesInRoom(uid, room.id);
         if (live) setCount(c);
-      } catch {}
+      } catch { /* Optional UI cleanup may fail if the element is already gone. */ }
     })();
     return ()=>{ live=false; };
   }, [uid, room?.id]);
@@ -32,14 +34,14 @@ export default function RoomCard({ uid, room, onRename, onDelete }) {
     <div className="card-neo p-3 h-100 room-card">
       <div className="d-flex align-items-start gap-3">
         <div className="room-icon">
-          <i className="fa-solid fa-door-open"></i>
+          <Icon className="fa-solid fa-door-open" />
         </div>
 
         <div className="flex-grow-1">
           {!editing ? (
             <>
               <div className="d-flex align-items-center">
-                <Link to={`/room/${room.id}`} className="stretched-link text-decoration-none">
+                <Link to={roomPath(room.id)} className="stretched-link text-decoration-none">
                   <h6 className="mb-0">{room.name}</h6>
                 </Link>
                 <div className="ms-2">
@@ -55,7 +57,7 @@ export default function RoomCard({ uid, room, onRename, onDelete }) {
                 Code: <span className="fw-semibold">{room.code}</span>
               </div>
               <div className="mt-2 d-flex gap-2">
-                <Link className="btn btn-sm btn-outline-primary rounded-pill" to={`/room/${room.id}`}>
+                <Link className="btn btn-sm btn-outline-primary rounded-pill" to={roomPath(room.id)}>
                   Manage devices
                 </Link>
               </div>

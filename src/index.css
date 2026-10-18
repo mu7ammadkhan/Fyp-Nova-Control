@@ -82,7 +82,7 @@ body{ background:var(--bg); color:var(--text); }
   background:var(--surface);
   color:var(--primary);
   border:1px solid var(--border);
-  box-shadow:0 12px 26px rgba(0,0,0,.08);
+  box-shadow:0 3px 12px rgba(20,45,75,.06);
   display:grid;
   place-items:center;
   font-size:22px;
@@ -94,7 +94,6 @@ body{ background:var(--bg); color:var(--text); }
   border:1px solid var(--border);
   border-radius:16px;
   box-shadow:var(--shadow-neo);
-  backdrop-filter:saturate(120%) blur(.4px);
   color:var(--text);
 }
 
@@ -270,22 +269,6 @@ input:-webkit-autofill:focus{
 /* =========================
    ANIMATIONS
    ========================= */
-@keyframes ncFadeSlide{
-  from{ opacity:0; transform:translateX(-8px); }
-  to{ opacity:1; transform:translateX(0); }
-}
-.nc-anim{ animation:ncFadeSlide .35s ease both; }
-.nc-menu .nc-anim:nth-child(1){ animation-delay:.05s; }
-.nc-menu .nc-anim:nth-child(2){ animation-delay:.10s; }
-.nc-menu .nc-anim:nth-child(3){ animation-delay:.15s; }
-.nc-menu .nc-anim:nth-child(4){ animation-delay:.20s; }
-
-@keyframes pageFadeUp{
-  from{ opacity:0; transform:translateY(6px); }
-  to{ opacity:1; transform:translateY(0); }
-}
-.page-fade{ animation: pageFadeUp .35s ease; }
-.slide-in{ animation: pageFadeUp .15s ease; }
 
 .no-underline, .btn-link{ text-decoration:none !important; }
 
@@ -383,9 +366,7 @@ input:-webkit-autofill:focus{
     radial-gradient(1200px 300px at 20% 0%, color-mix(in srgb, var(--primary) 14%, transparent), transparent 55%),
     color-mix(in srgb, var(--surface) 86%, transparent);
   border:1px solid color-mix(in srgb, var(--border) 90%, transparent);
-  box-shadow:0 22px 60px rgba(0,0,0,.14);
-  backdrop-filter: blur(12px) saturate(135%);
-  -webkit-backdrop-filter: blur(12px) saturate(135%);
+  box-shadow:0 3px 12px rgba(20,45,75,.06);
 }
 
 /* =========================
@@ -442,9 +423,7 @@ input:-webkit-autofill:focus{
     radial-gradient(1200px 300px at 20% 0%, color-mix(in srgb, var(--primary) 14%, transparent), transparent 55%),
     color-mix(in srgb, var(--surface) 86%, transparent);
   border:1px solid color-mix(in srgb, var(--border) 90%, transparent);
-  box-shadow:0 18px 52px rgba(0,0,0,.12);
-  backdrop-filter: blur(12px) saturate(135%);
-  -webkit-backdrop-filter: blur(12px) saturate(135%);
+  box-shadow:0 3px 12px rgba(20,45,75,.06);
   overflow:hidden;
   transition: transform .22s ease, box-shadow .22s ease, border-color .22s ease;
 }
@@ -464,7 +443,7 @@ input:-webkit-autofill:focus{
 }
 .device-glass:hover{
   transform: translateY(-4px);
-  box-shadow: 0 30px 72px rgba(0,0,0,.16);
+  box-shadow: 0 3px 12px rgba(20,45,75,.06);
   border-color: color-mix(in srgb, var(--primary) 25%, var(--border));
 }
 
@@ -482,7 +461,7 @@ input:-webkit-autofill:focus{
   background: color-mix(in srgb, var(--primary) 18%, var(--surface));
   border:1px solid color-mix(in srgb, var(--border) 90%, transparent);
   color:var(--primary);
-  box-shadow: 0 16px 30px rgba(0,0,0,.10);
+  box-shadow: 0 3px 12px rgba(20,45,75,.06);
   flex:0 0 auto;
 }
 .device-title-row{
@@ -546,14 +525,12 @@ input:-webkit-autofill:focus{
     radial-gradient(900px 260px at 18% 0%, color-mix(in srgb, var(--primary) 12%, transparent), transparent 58%),
     color-mix(in srgb, var(--surface) 88%, transparent);
   border:1px solid color-mix(in srgb, var(--border) 90%, transparent);
-  box-shadow: 0 16px 46px rgba(0,0,0,.10);
-  backdrop-filter: blur(10px) saturate(130%);
-  -webkit-backdrop-filter: blur(10px) saturate(130%);
+  box-shadow: 0 3px 12px rgba(20,45,75,.06);
   transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease;
 }
 .room-tile:hover{
   transform: translateY(-3px);
-  box-shadow: 0 26px 64px rgba(0,0,0,.19);
+  box-shadow: 0 3px 12px rgba(20,45,75,.06);
   border-color: color-mix(in srgb, var(--primary) 22%, var(--border));
 }
 
@@ -565,7 +542,7 @@ input:-webkit-autofill:focus{
   background: color-mix(in srgb, var(--primary) 16%, var(--surface));
   border:1px solid color-mix(in srgb, var(--border) 90%, transparent);
   color:var(--primary);
-  box-shadow: 0 14px 26px rgba(0,0,0,.10);
+  box-shadow: 0 3px 12px rgba(20,45,75,.06);
   flex:0 0 auto;
 }
 
@@ -586,57 +563,6 @@ input:-webkit-autofill:focus{
 
 /* chatbot.css */
 
-.chatbot-button {
-  position: fixed;
-  right: 20px;
-  bottom: 20px;
-  border-radius: 50%;
-  width: 56px;
-  height: 56px;
-  background-color: var(--primary); /* theme variable */
-  color: var(--text); /* theme variable */
-  border: none;
-  font-size: 22px;
-  z-index: 999;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.chatbot-panel {
-  position: fixed;
-  right: 20px;
-  bottom: 90px;
-  width: 300px;
-  background-color: var(--surface); /* adapts to light/dark */
-  border-radius: 12px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
-  z-index: 999;
-  color: var(--text); /* text adapts */
-}
-
-.chatbot-panel .header {
-  padding: 0.5rem;
-  font-weight: bold;
-  border-bottom: 1px solid var(--border);
-}
-
-.chatbot-panel .commands {
-  padding: 0.5rem;
-  font-size: 13px;
-  color: var(--muted);
-}
-
-.chatbot-panel .input-row {
-  padding: 0.5rem;
-  display: flex;
-  gap: 0.25rem;
-}
-
-.chatbot-panel .form-control {
-  flex: 1;
-}
-
 .room-card {
   position: relative;
   overflow: visible !important;
@@ -654,10 +580,6 @@ input:-webkit-autofill:focus{
 }
 
 /* 🔥 THIS IS THE REAL FIX */
-.room-tile{
-  backdrop-filter: none !important;
-  -webkit-backdrop-filter: none !important;
-}
 
 /* GUARANTEED FIX: lift the whole grid item above others when menu is open */
 .room-grid-item{
